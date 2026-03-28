@@ -56,4 +56,15 @@ def create_app(config_name='prod'):
     from .routes.download import download_bp as download_blueprint
     app.register_blueprint(download_blueprint)
 
+    from flask import jsonify
+    from flask_wtf.csrf import CSRFError
+
+    @app.errorhandler(429)
+    def ratelimit_handler(e):
+        return jsonify(error=f"Rate limit exceeded: {e.description}"), 429
+
+    @app.errorhandler(CSRFError)
+    def handle_csrf_error(e):
+        return jsonify(error="Security token expired. Please refresh the page and try again."), 400
+
     return app

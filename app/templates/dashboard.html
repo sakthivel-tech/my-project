@@ -171,10 +171,19 @@
 
             const resp = await fetch('/get_formats', {
                 method: 'POST',
-                body: formData
+                body: formData,
+                credentials: 'same-origin'
             });
 
-            const data = await resp.json();
+            let data;
+            const contentType = resp.headers.get("content-type");
+            if (contentType && contentType.indexOf("application/json") !== -1) {
+                data = await resp.json();
+            } else {
+                const text = await resp.text();
+                throw new Error("Server returned an invalid response (Session may have expired or Rate Limited).");
+            }
+
             if (data.error) throw new Error(data.error);
 
             document.getElementById('video-title').textContent = data.title;
