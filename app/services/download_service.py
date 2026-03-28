@@ -8,6 +8,8 @@ class DownloadService:
     def __init__(self, cookies_path=None):
         if not cookies_path:
             default_paths = [
+                os.environ.get('YTDLP_COOKIES_PATH', ''),
+                '/etc/secrets/cookies.txt',
                 os.path.join(os.getcwd(), 'cookies', 'cookies.txt.txt'),
                 os.path.join(os.getcwd(), 'cookies', 'cookies.txt'),
                 os.path.join(os.getcwd(), 'cookies.txt')
