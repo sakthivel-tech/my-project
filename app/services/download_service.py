@@ -29,14 +29,12 @@ class DownloadService:
             "noplaylist": True,
             "source_address": "0.0.0.0",
             "format": "best",
-            # Completely strip 'web' footprint to block PO-Token enforcement. 
-            "extractor_args": {"youtube": {"player_client": ["ios", "tv"]}},
+            "extractor_args": {"youtube": {"player_client": ["ios", "tv", "web_creator"]}},
             "legacyserverconnect": True
         }
         
-        # NOTE: Do NOT use cookies for `get_formats` unless strictly necessary, 
-        # as flagged cookies instantly trigger the "Bot" error on Cloud IPs!
-        # We only try cookies if the zero-auth iOS scrape fails.
+        if self.cookies_path:
+            ydl_opts["cookiefile"] = self.cookies_path
 
         try:
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
@@ -98,9 +96,12 @@ class DownloadService:
             "format": format_id,
             "noplaylist": True,
             "source_address": "0.0.0.0",
-            "extractor_args": {"youtube": {"player_client": ["ios", "tv"]}},
+            "extractor_args": {"youtube": {"player_client": ["ios", "tv", "web_creator"]}},
             "legacyserverconnect": True
         }
+        
+        if self.cookies_path:
+            ydl_opts["cookiefile"] = self.cookies_path
 
         try:
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
@@ -129,9 +130,11 @@ class DownloadService:
             'quiet': True,
             'no_playlist': True,
             "source_address": "0.0.0.0",
-            'extractor_args': {'youtube': {'player_client': ['ios', 'tv']}},
+            'extractor_args': {'youtube': {'player_client': ['ios', 'tv', 'web_creator']}},
             'legacyserverconnect': True
         }
+        if self.cookies_path:
+            ydl_opts_info["cookiefile"] = self.cookies_path
 
         try:
             with yt_dlp.YoutubeDL(ydl_opts_info) as ydl:
