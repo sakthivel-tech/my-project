@@ -31,6 +31,15 @@ def create_app(config_name='prod'):
     }
     talisman.init_app(app, content_security_policy=csp)
 
+    # Ensure database tables exist automatically in production servers (Render/Gunicorn)
+    import os
+    instance_path = os.path.join(os.getcwd(), 'instance')
+    if not os.path.exists(instance_path):
+        os.makedirs(instance_path, exist_ok=True)
+
+    with app.app_context():
+        db.create_all()
+
     login_manager.login_view = 'auth.login'
     login_manager.login_message_category = 'info'
 
