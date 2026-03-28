@@ -1,37 +1,110 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="glass-card">
-    <h1 style="margin-bottom: 1.5rem; text-align: center;">Download Any Video</h1>
-    <form id="url-form">
-        <input type="url" id="url" name="url" placeholder="Paste video URL here (YouTube, Vimeo, etc.)" required>
-        {% if current_user.is_authenticated %}
-        <button type="submit" class="btn-primary" style="width: 100%;">Analyze Video</button>
-        {% else %}
-        <button type="submit" class="btn-primary" style="width: 100%;">Login to Download</button>
-        {% endif %}
-    </form>
+<!-- Hero Section -->
+<div class="hero-section" style="text-align: center; margin-bottom: 4rem;">
+    <h1 style="font-size: 3rem; margin-bottom: 1rem; background: -webkit-linear-gradient(45deg, var(--primary), #a29bfe); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Free Universal Video Downloader</h1>
+    <p style="font-size: 1.2rem; color: var(--text-muted); margin-bottom: 2rem;">Download videos in high quality MP4 and MP3 from YouTube, Twitter, Instagram, TikTok, and 100+ other platforms.</p>
+    
+    <div class="glass-card" style="max-width: 800px; margin: 0 auto; text-align: left;">
+        <form id="url-form">
+            <input type="url" id="url" name="url" placeholder="Paste your video link here (YouTube, Instagram, etc)..." required style="padding: 1.2rem; font-size: 1.1rem;">
+            {% if current_user.is_authenticated %}
+            <button type="submit" class="btn-primary" style="width: 100%; padding: 1rem; font-size: 1.1rem; margin-top: 1rem;">Start Download</button>
+            {% else %}
+            <button type="submit" class="btn-primary" style="width: 100%; padding: 1rem; font-size: 1.1rem; margin-top: 1rem;">Login to Download</button>
+            {% endif %}
+        </form>
 
-    <div id="error-message" style="display: none; padding: 1rem; margin-top: 1rem; background: rgba(255, 0, 0, 0.1); border: 1px solid #ff4757; border-radius: 8px; color: #ff4757; text-align: center;"></div>
+        <div id="error-message" style="display: none; padding: 1rem; margin-top: 1rem; background: rgba(255, 0, 0, 0.1); border: 1px solid #ff4757; border-radius: 8px; color: #ff4757; text-align: center;"></div>
 
-    <div id="loader" style="display: none; text-align: center; margin-top: 2rem;">
-        <div class="spinner"></div>
-        <p style="color: var(--text-muted); margin-top: 0.5rem;">Extracting available formats...</p>
-    </div>
+        <div id="loader" style="display: none; text-align: center; margin-top: 2rem;">
+            <div class="spinner"></div>
+            <p style="color: var(--text-muted); margin-top: 0.5rem;">Extracting video formats...</p>
+        </div>
 
-    <div id="format-selection" style="display: none; margin-top: 2rem;">
-        <div style="display: flex; gap: 1.5rem; margin-bottom: 1.5rem;">
-            <img id="video-thumbnail" src="" style="width: 150px; border-radius: 12px; object-fit: cover;">
-            <div>
-                <h3 id="video-title">Video Title</h3>
-                <p id="video-duration" style="color: var(--text-muted);"></p>
+        <div id="format-selection" style="display: none; margin-top: 2rem; text-align: left;">
+            <div style="display: flex; gap: 1.5rem; margin-bottom: 1.5rem; align-items: center; flex-wrap: wrap;">
+                <img id="video-thumbnail" src="" style="width: 150px; border-radius: 12px; object-fit: cover;">
+                <div>
+                    <h3 id="video-title" style="margin-bottom: 0.5rem;">Video Title</h3>
+                    <p id="video-duration" style="color: var(--text-muted);"></p>
+                </div>
+            </div>
+
+            <h4 style="margin-bottom: 1rem;">Select Quality</h4>
+            <div id="formats-list" style="display: grid; gap: 0.5rem;">
+                <!-- Formats will be injected here -->
             </div>
         </div>
+    </div>
+</div>
 
-        <h4 style="margin-bottom: 1rem;">Select Quality</h4>
-        <div id="formats-list" style="display: grid; gap: 0.5rem;">
-            <!-- Formats will be injected here -->
+<!-- How to Use Section -->
+<div class="how-to-use" style="margin-bottom: 4rem; text-align: center;">
+    <h2 style="margin-bottom: 2rem;">How to Download Videos</h2>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 2rem;">
+        <div class="glass-card" style="padding: 2rem;">
+            <div style="font-size: 2.5rem; color: var(--primary); margin-bottom: 1rem; font-weight: bold;">1</div>
+            <h3>Copy Link</h3>
+            <p style="color: var(--text-muted); margin-top: 0.5rem;">Find the video you want to download and copy its URL from the address bar or share button.</p>
         </div>
+        <div class="glass-card" style="padding: 2rem;">
+            <div style="font-size: 2.5rem; color: var(--primary); margin-bottom: 1rem; font-weight: bold;">2</div>
+            <h3>Paste Link</h3>
+            <p style="color: var(--text-muted); margin-top: 0.5rem;">Paste the copied link into the search box above and click the "Start Download" button.</p>
+        </div>
+        <div class="glass-card" style="padding: 2rem;">
+            <div style="font-size: 2.5rem; color: var(--primary); margin-bottom: 1rem; font-weight: bold;">3</div>
+            <h3>Download</h3>
+            <p style="color: var(--text-muted); margin-top: 0.5rem;">Select your preferred video quality and format, then hit download to save it to your device.</p>
+        </div>
+    </div>
+</div>
+
+<!-- Features Section -->
+<div class="features" style="margin-bottom: 4rem;">
+    <h2 style="text-align: center; margin-bottom: 2rem;">Why Choose UltraStream?</h2>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem;">
+        <div style="padding: 1.5rem; background: rgba(255,255,255,0.02); border-left: 4px solid var(--primary); border-radius: 8px;">
+            <h4>High Quality 4K Support</h4>
+            <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 0.5rem;">Download videos in the highest possible quality including 1080p, 2K, and full 4K UHD.</p>
+        </div>
+        <div style="padding: 1.5rem; background: rgba(255,255,255,0.02); border-left: 4px solid var(--primary); border-radius: 8px;">
+            <h4>Unlimited & Free</h4>
+            <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 0.5rem;">No hidden limits or subscription fees. Enjoy unlimited downloads without restrictions.</p>
+        </div>
+        <div style="padding: 1.5rem; background: rgba(255,255,255,0.02); border-left: 4px solid var(--primary); border-radius: 8px;">
+            <h4>100% Safe & Secure</h4>
+            <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 0.5rem;">We don't log your downloaded content or inject risky ad-ware into your files.</p>
+        </div>
+        <div style="padding: 1.5rem; background: rgba(255,255,255,0.02); border-left: 4px solid var(--primary); border-radius: 8px;">
+            <h4>Cross Platform</h4>
+            <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 0.5rem;">Compatible across all devices. Download videos on PC, Mac, Android, and iOS instantly.</p>
+        </div>
+    </div>
+</div>
+
+<!-- FAQ Section -->
+<div class="faq-section" style="margin-bottom: 4rem; max-width: 800px; margin-left: auto; margin-right: auto;">
+    <h2 style="text-align: center; margin-bottom: 2rem;">Frequently Asked Questions</h2>
+    <div style="display: flex; flex-direction: column; gap: 1rem;">
+        <details style="background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 8px; padding: 1rem;">
+            <summary style="font-weight: 600; cursor: pointer; color: var(--text-light); list-style: none;">Is this video downloader completely free?</summary>
+            <p style="color: var(--text-muted); margin-top: 1rem; line-height: 1.5;">Yes! UltraStream is a completely free tool that allows you to save videos without creating a paid account.</p>
+        </details>
+        <details style="background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 8px; padding: 1rem;">
+            <summary style="font-weight: 600; cursor: pointer; color: var(--text-light); list-style: none;">What video formats are supported?</summary>
+            <p style="color: var(--text-muted); margin-top: 1rem; line-height: 1.5;">We support all major formats including MP4, MKV, WebM, and MP3 for audio extraction.</p>
+        </details>
+        <details style="background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 8px; padding: 1rem;">
+            <summary style="font-weight: 600; cursor: pointer; color: var(--text-light); list-style: none;">Does it work on Android and iPhone?</summary>
+            <p style="color: var(--text-muted); margin-top: 1rem; line-height: 1.5;">Absolutely. Our web app works flawlessly in any mobile browser including Safari on iOS and Chrome on Android.</p>
+        </details>
+        <details style="background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 8px; padding: 1rem;">
+            <summary style="font-weight: 600; cursor: pointer; color: var(--text-light); list-style: none;">Can I download private videos?</summary>
+            <p style="color: var(--text-muted); margin-top: 1rem; line-height: 1.5;">No. Our system respects user privacy and platform policies. We do not bypass login walls to download private or restricted content.</p>
+        </details>
     </div>
 </div>
 

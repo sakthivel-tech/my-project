@@ -30,3 +30,20 @@ def contact():
 @main.route('/help')
 def help_page():
     return render_template('help.html')
+
+@main.route('/privacy')
+def privacy():
+    return render_template('legal/privacy.html', title='Privacy Policy')
+
+@main.route('/tos')
+def tos():
+    return render_template('legal/tos.html', title='Terms of Service')
+
+@main.route('/disclaimer')
+def disclaimer():
+    return render_template('legal/disclaimer.html', title='Disclaimer')
+
+@main.route('/dmca')
+def dmca():
+    return render_template('legal/dmca.html', title='DMCA Policy')
+

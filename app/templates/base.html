@@ -4,7 +4,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Universal Video Downloader - Premium</title>
+    <meta name="description" content="Download videos from YouTube, TikTok, Facebook, Instagram and more for free. Fast, safe, and universal video downloader in 4K MP4 or MP3 formats.">
+    <meta name="keywords" content="video downloader, youtube downloader, download videos, tiktok downloader, instagram reels downloader, free mp4 download">
+    <meta name="robots" content="index, follow">
+    <title>{{ title|default('Free Universal Video Downloader in 4K MP4 - UltraStream') }}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
 </head>
@@ -48,8 +51,34 @@
         </div>
     </div>
 
-    <footer style="text-align: center; color: var(--text-muted); padding: 2rem; font-size: 0.8rem;">
-        &copy; 2026 UltraStream - The Future of Video Downloads
+    <footer style="background: rgba(0,0,0,0.2); border-top: 1px solid var(--glass-border); padding: 3rem 1rem; margin-top: 4rem;">
+        <div style="max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 2rem;">
+            <div>
+                <h3 style="color: var(--primary); margin-bottom: 1rem;">UltraStream</h3>
+                <p style="color: var(--text-muted); font-size: 0.9rem; line-height: 1.6;">The premier universal video downloader on the web. Save media for offline viewing fast, securely, and for free.</p>
+            </div>
+            <div>
+                <h4 style="margin-bottom: 1rem;">Quick Links</h4>
+                <ul style="list-style: none; padding: 0; display: flex; flex-direction: column; gap: 0.8rem; font-size: 0.9rem;">
+                    <li><a href="{{ url_for('main.index') }}" style="color: var(--text-muted); text-decoration: none; transition: color 0.3s;" onmouseover="this.style.color='var(--primary)'" onmouseout="this.style.color='var(--text-muted)'">Home</a></li>
+                    <li><a href="{{ url_for('main.about') }}" style="color: var(--text-muted); text-decoration: none; transition: color 0.3s;" onmouseover="this.style.color='var(--primary)'" onmouseout="this.style.color='var(--text-muted)'">About</a></li>
+                    <li><a href="{{ url_for('main.contact') }}" style="color: var(--text-muted); text-decoration: none; transition: color 0.3s;" onmouseover="this.style.color='var(--primary)'" onmouseout="this.style.color='var(--text-muted)'">Contact</a></li>
+                    <li><a href="{{ url_for('main.help_page') }}" style="color: var(--text-muted); text-decoration: none; transition: color 0.3s;" onmouseover="this.style.color='var(--primary)'" onmouseout="this.style.color='var(--text-muted)'">Help & FAQ</a></li>
+                </ul>
+            </div>
+            <div>
+                <h4 style="margin-bottom: 1rem;">Legal & Policy</h4>
+                <ul style="list-style: none; padding: 0; display: flex; flex-direction: column; gap: 0.8rem; font-size: 0.9rem;">
+                    <li><a href="{{ url_for('main.tos') }}" style="color: var(--text-muted); text-decoration: none; transition: color 0.3s;" onmouseover="this.style.color='var(--primary)'" onmouseout="this.style.color='var(--text-muted)'">Terms of Service</a></li>
+                    <li><a href="{{ url_for('main.privacy') }}" style="color: var(--text-muted); text-decoration: none; transition: color 0.3s;" onmouseover="this.style.color='var(--primary)'" onmouseout="this.style.color='var(--text-muted)'">Privacy Policy</a></li>
+                    <li><a href="{{ url_for('main.disclaimer') }}" style="color: var(--text-muted); text-decoration: none; transition: color 0.3s;" onmouseover="this.style.color='var(--primary)'" onmouseout="this.style.color='var(--text-muted)'">Disclaimer</a></li>
+                    <li><a href="{{ url_for('main.dmca') }}" style="color: var(--text-muted); text-decoration: none; transition: color 0.3s;" onmouseover="this.style.color='var(--primary)'" onmouseout="this.style.color='var(--text-muted)'">DMCA Copyright</a></li>
+                </ul>
+            </div>
+        </div>
+        <div style="text-align: center; color: var(--text-muted); padding-top: 2rem; margin-top: 2rem; border-top: 1px solid rgba(255,255,255,0.05); font-size: 0.8rem;">
+            &copy; 2026 UltraStream. Intended for personal, educational, and fair-use purposes only.
+        </div>
     </footer>
 </body>
 
