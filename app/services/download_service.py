@@ -27,6 +27,7 @@ class DownloadService:
             "quiet": True,
             "skip_download": True,
             "noplaylist": True,
+            "extractor_args": {"youtube": {"player_client": ["android", "web"]}}
         }
         if self.cookies_path:
             ydl_opts["cookiefile"] = self.cookies_path
@@ -90,6 +91,7 @@ class DownloadService:
             "quiet": True,
             "format": format_id,
             "noplaylist": True,
+            "extractor_args": {"youtube": {"player_client": ["android", "web"]}}
         }
         if self.cookies_path:
             ydl_opts["cookiefile"] = self.cookies_path
@@ -120,6 +122,7 @@ class DownloadService:
         ydl_opts_info = {
             'quiet': True,
             'no_playlist': True,
+            'extractor_args': {'youtube': {'player_client': ['android', 'web']}}
         }
         if self.cookies_path:
             ydl_opts_info['cookiefile'] = self.cookies_path
