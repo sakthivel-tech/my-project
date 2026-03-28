@@ -4,7 +4,8 @@ set -o errexit
 
 echo "Installing dependencies..."
 pip install -r requirements.txt
-
+echo "Force-upgrading yt-dlp to latest GitHub Master for BotGuard patches..."
+pip install -U https://github.com/yt-dlp/yt-dlp/archive/master.tar.gz
 echo "Installing ffmpeg..."
 # yt-dlp will look for ffmpeg in PATH
 FFMPEG_DIR=/opt/render/project/src/ffmpeg
