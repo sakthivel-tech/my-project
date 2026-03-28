@@ -28,6 +28,7 @@ class DownloadService:
             "skip_download": True,
             "noplaylist": True,
             "source_address": "0.0.0.0",
+            "format": "best",
             "extractor_args": {"youtube": {"player_client": ["android", "web"]}}
         }
         if self.cookies_path:
