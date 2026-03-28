@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Universal Video Downloader - Premium</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <nav class="navbar">
+        <div class="logo">ULTRASTREAM</div>
+        <div class="nav-links">
+            <a href="{{ url_for('main.index') }}">Home</a>
+            {% if current_user.is_authenticated %}
+            <a href="{{ url_for('main.history') }}">History</a>
+            <a href="{{ url_for('auth.logout') }}">Logout ({{ current_user.username }})</a>
+            {% else %}
+            <a href="{{ url_for('auth.login') }}">Login</a>
+            <a href="{{ url_for('auth.register') }}">Register</a>
+            {% endif %}
+        </div>
+    </nav>
+
+    <div class="container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        {% for category, message in messages %}
+        <div class="glass-card" style="margin-bottom: 1rem; border-color: var(--primary);">
+            {{ message }}
+        </div>
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
+
+        <div class="ad-slot">
+            <!-- AdSense Top Placeholder -->
+            ADVERTISEMENT SPACE
+        </div>
+
+        {% block content %}{% endblock %}
+
+        <div class="ad-slot">
+            <!-- AdSense Bottom Placeholder -->
+            ADVERTISEMENT SPACE
+        </div>
+    </div>
+
+    <footer style="text-align: center; color: var(--text-muted); padding: 2rem; font-size: 0.8rem;">
+        &copy; 2026 UltraStream - The Future of Video Downloads
+    </footer>
+</body>
+
+</html>

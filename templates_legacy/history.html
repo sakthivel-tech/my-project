@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Download History</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      background: #f0f0f0;
+      color: #333;
+      max-width: 900px;
+      margin: auto;
+    }
+    h1 {
+      margin-bottom: 0.5em;
+    }
+    /* Flash messages */
+    .flash-message {
+      padding: 12px 16px;
+      margin-bottom: 16px;
+      border-radius: 4px;
+      border: 1px solid transparent;
+      font-weight: 600;
+    }
+    .flash-success {
+      color: #155724;
+      background-color: #d4edda;
+      border-color: #c3e6cb;
+    }
+    .flash-danger {
+      color: #721c24;
+      background-color: #f8d7da;
+      border-color: #f5c6cb;
+    }
+    /* Buttons container */
+    .buttons {
+      margin-bottom: 20px;
+      display: flex;
+      gap: 12px;
+    }
+    /* Buttons styling */
+    button, a.button-link {
+      padding: 10px 18px;
+      border-radius: 4px;
+      font-size: 1rem;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-block;
+      text-align: center;
+      user-select: none;
+      transition: background-color 0.3s ease;
+      border: none;
+    }
+    /* Clear History button */
+    form.clear-history button {
+      background-color: #dc3545;
+      color: white;
+    }
+    form.clear-history button:hover,
+    form.clear-history button:focus {
+      background-color: #c82333;
+      outline: none;
+    }
+    /* Back button as link styled like a button */
+    a.button-link {
+      background-color: #007bff;
+      color: white;
+      line-height: 1.2;
+      border: none;
+    }
+    a.button-link:hover,
+    a.button-link:focus {
+      background-color: #0056b3;
+      outline: none;
+    }
+    /* Table styling */
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      background: white;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      font-size: 0.95rem;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 10px 14px;
+      text-align: left;
+      vertical-align: middle;
+      word-break: break-word;
+    }
+    th {
+      background-color: #007bff;
+      color: white;
+      user-select: none;
+    }
+    tr:nth-child(even) {
+      background-color: #f9f9f9;
+    }
+    a {
+      color: #007bff;
+      text-decoration: none;
+    }
+    a:hover,
+    a:focus {
+      text-decoration: underline;
+    }
+    p.no-history {
+      font-style: italic;
+      color: #666;
+      margin-top: 40px;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <h1>Download History</h1>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      {% for category, message in messages %}
+        <div class="flash-message flash-{{ category }}">
+          {{ message }}
+        </div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
+
+  <div class="buttons">
+    <form class="clear-history" method="POST" action="{{ url_for('clear_history') }}" 
+          onsubmit="return confirm('Are you sure you want to clear the download history?');">
+      <button type="submit" aria-label="Clear download history">Clear History</button>
+    </form>
+
+    <a href="{{ url_for('index') }}" class="button-link" role="button" aria-label="Back to dashboard">Back</a>
+  </div>
+
+  {% if history %}
+  <table role="grid" aria-describedby="historyDesc">
+    <caption id="historyDesc" style="text-align:left; padding-bottom:8px;">
+      List of all previously downloaded files with details.
+    </caption>
+    <thead>
+      <tr>
+        <th scope="col">Date</th>
+        <th scope="col">URL</th>
+        <th scope="col">Filename</th>
+        <th scope="col">Size</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in history %}
+      <tr>
+        <td>{{ item.date }}</td>
+        <td><a href="{{ item.url }}" target="_blank" rel="noopener noreferrer">{{ item.url }}</a></td>
+        <td>{{ item.filename }}</td>
+        <td>{{ item.filesize if item.filesize else '—' }}</td>                  
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p class="no-history">No download history found.</p>
+  {% endif %}
+</body>
+</html>

@@ -1,0 +1,16 @@
+# Created by venv; see https://docs.python.org/3/linstance/
+temp_downloads/
+downloads_legacy/
+*.pyc
+__pycache__/
+.env
+venv/
+*.mp4
+*.part
+*.ytdl
+instance/
+*.db
+*.log
+*.json
+*.txt
+!requirements.txt

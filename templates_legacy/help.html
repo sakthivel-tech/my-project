@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Help - Universal Media Downloader</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <style>
+    .container { max-width: 800px; margin: auto; padding: 20px; }
+    h1 { text-align: center; color: rgb(230, 15, 15); }
+    ol { padding-left: 20px; }
+    .card { background: var(--card-bg, #fff); padding: 20px; border-radius: 10px; margin-top: 20px; }
+    body.dark { background-color: #121212; color: #fff; }
+    body.dark .card { background-color: #1f1f1f; color: #fff; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Help & Instructions</h1>
+    <div class="card">
+      <h3>📌 How to Use:</h3>
+      <ol>
+        <li>Enter the video URL (supports multiple sites).</li>
+        <li>For private videos, upload a <code>cookies.txt</code> file.</li>
+        <li>Click "Load Formats" to view available quality options.</li>
+        <li>Select a format and click "Download".</li>
+      </ol>
+      
+    </div>
+    <a href="{{ url_for('index') }}">⬅ Back to Home</a>
+  </div>
+</body>
+</html>

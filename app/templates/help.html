@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="glass-card">
+    <h1 style="margin-bottom: 2rem;">Frequently Asked Questions</h1>
+
+    <div style="display: grid; gap: 1.5rem;">
+        <div
+            style="background: rgba(255, 255, 255, 0.03); padding: 1.5rem; border-radius: 12px; border: 1px solid var(--glass-border);">
+            <h3 style="margin-bottom: 0.5rem; color: var(--primary);">How do I download a video?</h3>
+            <p style="font-size: 0.9rem; color: var(--text-muted);">Paste the URL from any supported platform (YouTube,
+                Facebook, etc.) into the analyzer and select your preferred quality.</p>
+        </div>
+        <div
+            style="background: rgba(255, 255, 255, 0.03); padding: 1.5rem; border-radius: 12px; border: 1px solid var(--glass-border);">
+            <h3 style="margin-bottom: 0.5rem; color: var(--primary);">Are there limits for free users?</h3>
+            <p style="font-size: 0.9rem; color: var(--text-muted);">Free users can download up to 50 videos per hour.
+                Upgrade to Premium for unlimited downloads and high-speed streaming.</p>
+        </div>
+        <div
+            style="background: rgba(255, 255, 255, 0.03); padding: 1.5rem; border-radius: 12px; border: 1px solid var(--glass-border);">
+            <h3 style="margin-bottom: 0.5rem; color: var(--primary);">Why is my download failing?</h3>
+            <p style="font-size: 0.9rem; color: var(--text-muted);">Make sure the video is public and correctly
+                formatted. Check our status page if the issue persists.</p>
+        </div>
+    </div>
+</div>
+{% endblock %}

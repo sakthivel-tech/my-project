@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>About - Universal Media Downloader</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <style>
+    .container { max-width: 800px; margin: auto; padding: 20px; }
+    h1 { text-align: center; color: #ef1919; }
+    .card {
+      background: var(--card-bg, #fff);
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      margin-top: 20px;
+    }
+    ul { list-style: none; padding: 0; }
+    ul li::before {
+      content: "✔";
+      margin-right: 8px;
+      color: white;
+    }
+    a.back-btn { display: inline-block; margin-top: 20px; color: #6c4ab6; text-decoration: none; }
+    body.dark { background-color: #121212; color: #fff; }
+    body.dark .card { background-color: #1f1f1f; color: #fff; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>About This Project</h1>
+    <div class="card">
+      <p>
+        Universal Media Downloader is a lightweight yet powerful web tool built with
+        <b>Python (Flask)</b> and <b>yt-dlp</b> that allows you to download videos and audio
+        from multiple platforms like YouTube, Instagram, Facebook, Twitter, and more.
+      </p>
+      <h3>✨ Features:</h3>
+      <ul>
+        <li>Multiple format & resolution options</li>
+        <li>Private video downloads with cookies.txt</li>
+        <li>Download history tracking</li>
+        <li>Dark mode support</li>
+        <li>Batch download support</li>
+      </ul>
+    </div>
+    <a class="back-btn" href="{{ url_for('index') }}">⬅ Back to Home</a>
+  </div>
+</body>
+</html>

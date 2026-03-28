@@ -1,0 +1,267 @@
+/* ===== Global Reset ===== */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: "Segoe UI", Tahoma, sans-serif;
+}
+
+/* ===== Body ===== */
+body {
+  min-height: 100vh;
+  padding: 7rem 1rem 2rem;
+  text-align: center;
+  font-family: 'Orbitron', sans-serif;
+  color: #222;
+  background: url("https://wallpaperaccess.com/full/10812590.png") center/cover no-repeat fixed;
+  transition: background 0.4s ease, color 0.4s ease;
+}
+
+h1 {
+    font-family: 'Orbitron', sans-serif;
+}
+
+.logo {
+  font-family: 'orbitron', sans-serif;
+  font-size: 38px;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
+.logo span {
+  color: #3409f5;
+  font-size: 52px;
+  font-weight: 800;
+  margin-right: 2px;
+  
+}
+
+
+body.dark {
+  color: #e5e5e5;
+  background: linear-gradient(-45deg,#121212,#1c1c1c,#2a2a2a,#1a1a1a);
+  background-size: 400% 400%;
+  animation: gradientShift 12s ease infinite;
+}
+
+@keyframes gradientShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* ===== Navbar ===== */
+nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 1000;
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  padding: 12px;
+  background: linear-gradient(90deg,#6c4ab6,#8e2de2);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+}
+
+nav a {
+  color: white;
+  text-decoration: none;
+  padding: 8px 15px;
+  border-radius: 8px;
+  transition: 0.3s;
+  font-weight: 500;
+}
+
+nav a:hover {
+  background: rgba(255,255,255,0.2);
+}
+
+/* ===== Container ===== */
+.container, main {
+  max-width: 900px;
+  margin: auto;
+}
+
+/* ===== Card (Glass) ===== */
+.card {
+  background: rgba(255,255,255,0.18);
+  backdrop-filter: blur(16px);
+  border-radius: 18px;
+  padding: 28px;
+  margin-top: 2rem;
+  box-shadow: 0 25px 60px rgba(0,0,0,0.25);
+  animation: fadeUp 0.6s ease;
+}
+
+body.dark .card {
+  background: rgba(0,0,0,0.45);
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ===== Forms ===== */
+input, select, textarea, button {
+  width: 100%;
+  padding: 0.75rem;
+  margin-top: 0.6rem;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  font-size: 1rem;
+  transition: 0.2s;
+}
+
+body.dark input, body.dark select, body.dark textarea {
+  background: #2c2c2c;
+  color: #fff;
+  border: 1px solid #444;
+}
+
+/* ===== Buttons ===== */
+button, .btn {
+  background: #6c4ab6;
+  color: #fff;
+  border: none;
+  cursor: pointer;
+}
+
+button:hover, .btn:hover {
+  background: #5a3aa3;
+  transform: translateY(-1px);
+}
+
+body.dark button {
+  background: #8e2de2;
+}
+
+/* ===== History Button ===== */
+.history-button {
+  display: inline-block;
+  margin-top: 1.5rem;
+  padding: 0.75rem 1.5rem;
+  background: #0077cc;
+  color: #fff;
+  border-radius: 8px;
+  text-decoration: none;
+}
+
+.history-button:hover {
+  background: #005fa3;
+}
+
+/* ===== Table ===== */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1.5rem;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+th, td {
+  padding: 1rem;
+  border-bottom: 1px solid #eee;
+}
+
+th {
+  background: rgba(0,0,0,0.05);
+}
+
+/* ===== Spinner ===== */
+#loading {
+  text-align: center;
+  margin-top: 1.5rem;
+}
+
+.spinner {
+  border: 5px solid #ccc;
+  border-top: 5px solid #6c4ab6;
+  border-radius: 50%;
+  width: 42px;
+  height: 42px;
+  animation: spin 1s linear infinite;
+  margin: auto;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.hidden { display: none; }
+
+/* ===== Toggle Switch ===== */
+.theme-switch {
+  position: fixed;
+  top: 75px;
+  right: 20px;
+  z-index: 9999;
+}
+
+.theme-switch input { display: none; }
+
+.switch {
+  width: 60px;
+  height: 30px;
+  background: #ddd;
+  border-radius: 50px;
+  cursor: pointer;
+  position: relative;
+  transition: 0.3s;
+}
+
+.switch::after {
+  content: "";
+  width: 24px;
+  height: 24px;
+  background: #fff;
+  border-radius: 50%;
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  transition: 0.3s;
+}
+
+input:checked + .switch {
+  background: #9d4edd;
+}
+
+input:checked + .switch::after {
+  transform: translateX(30px);
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 600px) {
+  nav { flex-wrap: wrap; }
+  body { padding-top: 9rem; }
+}
+
+.success{
+  margin-top:20px;
+  padding:25px;
+  border-radius:12px;
+  text-align:center;
+  background:rgba(76,175,80,0.15);
+  color:#2e7d32;
+  animation: pop 0.6s ease;
+}
+
+.checkmark{
+  font-size:60px;
+  color:#4CAF50;
+  animation: bounce 0.8s ease;
+}
+
+@keyframes pop{
+  from{transform:scale(0.6);opacity:0;}
+  to{transform:scale(1);opacity:1;}
+}
+
+@keyframes bounce{
+  0%{transform:scale(0.3);}
+  50%{transform:scale(1.2);}
+  100%{transform:scale(1);}
+}

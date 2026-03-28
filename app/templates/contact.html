@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="glass-card">
+    <h1 style="margin-bottom: 1.5rem;">Contact Support</h1>
+    <p style="color: var(--text-muted); line-height: 1.6; margin-bottom: 2rem;">
+        Need help with a video download or have a feature request? Our team is here to assist you.
+        Reach out to us via any of the channels below.
+    </p>
+
+    <div style="display: grid; gap: 1rem;">
+        <div
+            style="background: rgba(255, 255, 255, 0.03); padding: 1.5rem; border-radius: 12px; border: 1px solid var(--glass-border); display: flex; align-items: center; gap: 1rem;">
+            <div style="font-size: 1.5rem;">📧</div>
+            <div>
+                <div style="font-weight: 600;">Email Support</div>
+                <div style="color: var(--text-muted); font-size: 0.9rem;">support@ultrastream.com</div>
+            </div>
+        </div>
+        <div
+            style="background: rgba(255, 255, 255, 0.03); padding: 1.5rem; border-radius: 12px; border: 1px solid var(--glass-border); display: flex; align-items: center; gap: 1rem;">
+            <div style="font-size: 1.5rem;">💬</div>
+            <div>
+                <div style="font-weight: 600;">Live Chat</div>
+                <div style="color: var(--text-muted); font-size: 0.9rem;">Available for Premium users 24/7.</div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

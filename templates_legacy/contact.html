@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Contact - Universal Media Downloader</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <style>
+    .container { max-width: 800px; margin: auto; padding: 20px; }
+    h1 { text-align: center; color: rgb(238, 17, 17); }
+    .card { background: var(--card-bg, #ee0909); padding: 20px; border-radius: 10px; margin-top: 20px; }
+    ul { list-style: none; padding: 0; }
+    ul li { margin-bottom: 10px; }
+    a { color: rgb(16, 16, 17); }
+    body.dark { background-color: red; color: #1c57e1; }
+    body.dark .card { background-color: red; color: #581db0; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Contact Us</h1>
+    <div class="contact-card">
+    <p>
+        <strong>📧 Email:</strong><br>
+        <a href="mailto:sathanasudhakaran@gmail.com">sathanasudhakaran@gmail.com</a><br>
+        <a href="mailto:monikaaramesh2006@gmail.com">monikaaramesh2006@gmail.com</a><br>
+        <a href="mailto:sakthivelpalanisamy17@gmail.com">sakthivelpalanisamy17@gmail.com</a>
+    </p>
+
+    <p>
+        <strong>💻 GitHub:</strong>
+        <a href="https://github.com/YOUR_REPO_LINK" target="_blank">
+            Project Repository
+        </a>
+    </p>
+
+    
+</div>
+
+    <a href="{{ url_for('index') }}">⬅ Back to Home</a>
+  </div>
+</body>
+</html>

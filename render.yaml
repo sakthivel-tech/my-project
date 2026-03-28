@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: video-vault-pro
+    env: python
+    buildCommand: chmod +x render-build.sh && ./render-build.sh
+    startCommand: export PATH="/opt/render/project/src/ffmpeg:$PATH" && gunicorn -c gunicorn_config.py run:app
+    envVars:
+      - key: FLASK_ENV
+        value: prod
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DATABASE_URL
+        fromDatabase:
+          name: videovault_db
+          property: connectionString
+
+databases:
+  - name: videovault_db
+    plan: free # Change to starter for production

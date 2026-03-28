@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  
+
+  
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600&display=swap" rel="stylesheet">
+
+</head>
+
+<nav>
+    <a href="{{ url_for('index') }}">Home</a>
+    <a href="{{ url_for('about') }}">About</a>
+    <a href="{{ url_for('help_page') }}">Help</a>
+    <a href="{{ url_for('contact') }}">Contact</a>
+</nav>
+
+<body>
+  <h1 class="logo">
+  <span>U</span>niversal <span>V</span>ideo <span>D</span>ownloader
+</h1>
+  
+ 
+  <div class="theme-switch">
+     <h2>Dark Mode</h2>
+  <input type="checkbox" id="darkToggle">
+  <label for="darkToggle" class="switch">
+    <span class="icon sun">☀️</span>
+    <span class="icon moon">🌙</span>
+  </label>
+</div>
+
+  <div class="card">
+  <main>
+    <form id="downloadForm" method="POST" action="/download" enctype="multipart/form-data">
+      <label for="url">Video URL(s):</label>
+      <textarea name="url" id="url" required placeholder="Enter video URL(s), one per line..."></textarea>
+
+      
+
+      <label for="format_id">Choose Format:</label>
+      <select name="format_id" id="format_id" required>
+        <option value="" disabled selected>Select a format</option>
+      </select>
+      <button type="button" id="fetchFormatsBtn">🔍 Load Formats</button>
+
+      <button type="submit">⬇️ Download</button>
+    </form>
+  </div>
+  
+  <!-- Adaptive Light/Dark Mode Copyright Disclaimer Banner -->
+<style>
+  .disclaimer-banner {
+    padding: 12px;
+    border-radius: 6px;
+    margin-bottom: 20px;
+    font-size: 0.95em;
+    text-align: center;
+    font-weight: 500;
+  }
+
+  /* Light mode */
+  @media (prefers-color-scheme: light) {
+    .disclaimer-banner {
+      background-color: #fff3cd;
+      color: #856404;
+      border: 1px solid #ffeeba;
+    }
+  }
+
+  /* Dark mode */
+  @media (prefers-color-scheme: dark) {
+    .disclaimer-banner {
+      background-color: #2c2c2c;
+      color: #ffd966;
+      border: 1px solid #ffd966;
+    }
+  }
+</style>
+
+<div class="disclaimer-banner">
+⚠️ <strong>Disclaimer:</strong> This tool is a technical demonstration for personal or legally allowed content only. Downloading copyrighted content without permission may violate laws and platform rules. Users are responsible for compliance.
+</div>
+  
+    <div id="spinner" style="display:none;">
+  <p>Downloading... Please wait</p>
+</div>
+
+    <div id="successBox" class="success hidden">
+  <div class="checkmark">✓</div>
+  <p>Download Completed!</p>
+</div>
+
+
+
+
+    <div id="messages">
+      {% with messages = get_flashed_messages() %}
+        {% if messages %}
+          <ul>
+            {% for msg in messages %}
+              <li>{{ msg }}</li>
+            {% endfor %}
+          </ul>
+        {% endif %}
+      {% endwith %}
+    </div>
+
+    <a href="/history" class="history-button">📜 View Download History</a>
+  </main>
+  <script>
+  // Dark mode toggle
+  const toggle = document.getElementById("darkToggle");
+
+toggle.addEventListener("change", () => {
+  const isDark = toggle.checked;
+  document.body.classList.toggle("dark", isDark);
+  localStorage.setItem("darkMode", isDark);
+});
+
+window.onload = () => {
+  const isDark = localStorage.getItem("darkMode") === "true";
+  document.body.classList.toggle("dark", isDark);
+  toggle.checked = isDark;
+};
+
+
+  // Fetch available formats
+  document.getElementById('fetchFormatsBtn').addEventListener('click', async () => {
+    const urlInput = document.getElementById('url').value.trim().split('\n')[0];
+    if (!urlInput) return alert("Please enter a URL first.");
+
+    const formData = new FormData();
+    formData.append("url", urlInput);
+
+    const formatDropdown = document.getElementById("format_id");
+    formatDropdown.innerHTML = `<option>Loading formats...</option>`;
+
+    try {
+      const res = await axios.post('/get_formats', formData);
+
+      if (res.data.error) throw new Error(res.data.error);
+
+      const formats = res.data.formats || [];
+      formatDropdown.innerHTML = "";
+
+      if (formats.length === 0) {
+        formatDropdown.innerHTML = `<option>No formats available</option>`;
+        return;
+      }
+
+      formats.forEach(f => {
+        const opt = document.createElement("option");
+        const size = f.filesize ? `${f.filesize} MB` : "Unknown size";
+
+
+        opt.value = f.format_id;
+        opt.text = `${f.resolution || "Audio"} - ${f.ext} (${size})`;
+        formatDropdown.appendChild(opt);
+      });
+    } catch (err) {
+      formatDropdown.innerHTML = `<option>Error loading formats</option>`;
+      alert("Error loading formats: " + err.message);
+    }
+  });
+
+  // Download with spinner + fetch
+  document.getElementById('downloadForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+
+    const spinner = document.getElementById('spinner');
+    spinner.style.display = 'block';
+
+    const formData = new FormData(this);
+
+    try {
+      const response = await fetch('/download', {
+        method: 'POST',
+        body: formData
+      });
+
+      if (!response.ok) throw new Error("Download failed");
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+       document.getElementById("successBox").classList.remove("hidden");
+setTimeout(()=>{
+  document.getElementById("successBox").classList.add("hidden");
+},4000);
+
+
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = "";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      spinner.style.display = 'none';
+    }
+  });
+
+ 
+</script>
+
+
+</body>
+</html>

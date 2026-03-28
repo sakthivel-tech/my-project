@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="glass-card">
+    <h1 style="margin-bottom: 2rem;">Download History</h1>
+
+    <div class="ad-slot" style="min-height: 60px; font-size: 0.7rem;">
+        Premium Feature: Sync history across devices
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 1rem;">
+        {% for item in history %}
+        <div
+            style="background: rgba(255, 255, 255, 0.05); padding: 1.5rem; border-radius: 16px; border: 1px solid var(--glass-border); display: flex; justify-content: space-between; align-items: center;">
+            <div>
+                <div style="font-weight: 600; font-size: 1.1rem; margin-bottom: 0.25rem;">{{ item.title or "Unknown
+                    Title" }}</div>
+                <div style="color: var(--text-muted); font-size: 0.9rem;">
+                    {{ item.platform }} &bull; {{ item.filesize_mb|round(2) if item.filesize_mb else "N/A" }} MB
+                    &bull; {{ item.timestamp.strftime('%Y-%m-%d %H:%M') }}
+                </div>
+            </div>
+            <a href="{{ item.url }}" target="_blank"
+                style="color: var(--primary); text-decoration: none; font-weight: 600; font-size: 0.9rem;">Original
+                Link</a>
+        </div>
+        {% else %}
+        <p style="text-align: center; color: var(--text-muted); padding: 3rem;">No downloads found yet.</p>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
