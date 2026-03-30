@@ -38,7 +38,10 @@ def create_app(config_name='prod'):
     if not os.path.exists(instance_path):
         os.makedirs(instance_path, exist_ok=True)
 
-    with app.app_context():
+    @app.before_request
+    def setup_db():
+        # Remove the hook so it only runs once per worker on the first request
+        app.before_request_funcs.setdefault(None, []).remove(setup_db)
         db.create_all()
 
     login_manager.login_view = 'auth.login'

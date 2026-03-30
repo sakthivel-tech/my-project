@@ -3,7 +3,7 @@ services:
     name: video-vault-pro
     env: python
     buildCommand: chmod +x render-build.sh && ./render-build.sh
-    startCommand: export PATH="/opt/render/project/src/ffmpeg:$PATH" && gunicorn -c gunicorn_config.py run:app
+    startCommand: export PATH="/opt/render/project/src/ffmpeg:$PATH" && gunicorn -c gunicorn_config.py -b 0.0.0.0:$PORT run:app
     envVars:
       - key: FLASK_ENV
         value: prod
