@@ -21,7 +21,7 @@ def create_app(config_name='prod'):
     login_manager.init_app(app)
     csrf.init_app(app)
     limiter.init_app(app)
-    
+
     csp = {
         'default-src': ['\'self\''],
         'script-src': ['\'self\'', '\'unsafe-inline\''],
@@ -31,7 +31,8 @@ def create_app(config_name='prod'):
     }
     talisman.init_app(app, content_security_policy=csp)
 
-    # Ensure database tables exist automatically in production servers (Render/Gunicorn)
+    # Ensure database tables exist automatically in production servers
+    # (Render/Gunicorn)
     import os
     instance_path = os.path.join(os.getcwd(), 'instance')
     if not os.path.exists(instance_path):
@@ -65,6 +66,7 @@ def create_app(config_name='prod'):
 
     @app.errorhandler(CSRFError)
     def handle_csrf_error(e):
-        return jsonify(error="Security token expired. Please refresh the page and try again."), 400
+        return jsonify(
+            error="Security token expired. Please refresh the page and try again."), 400
 
     return app
