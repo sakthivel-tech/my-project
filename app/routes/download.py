@@ -25,12 +25,12 @@ def get_formats():
         return jsonify(data)
     except Exception as e:
         error_msg = str(e)
-        if "Sign in to confirm you're not a bot" in error_msg or "bot" in error_msg.lower():
-            return jsonify({"error": "YouTube bot detection triggered. Please try again later or provide a cookies.txt file."}), 500
-        elif "Private video" in error_msg:
-            return jsonify({"error": "This video is private."}), 400
-        elif "Video unavailable" in error_msg:
-            return jsonify({"error": "This video is unavailable."}), 400
+        if "sign in" in error_msg.lower() or "bot" in error_msg.lower() or "exhausted" in error_msg.lower() or "player response" in error_msg.lower():
+            return jsonify({"error": "YouTube active bot blocker triggered on the cloud server. Please try again later or upload a cookies.txt file to permanently bypass this."}), 500
+        elif "Private video" in error_msg or "private" in error_msg.lower():
+            return jsonify({"error": "This video is private or members-only."}), 400
+        elif "unavailable" in error_msg.lower():
+            return jsonify({"error": "This video is unavailable outside of its designated region."}), 400
         return jsonify({"error": f"Failed to extract video formats: {error_msg}"}), 500
 
 
