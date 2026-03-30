@@ -30,13 +30,13 @@ class DownloadService:
         This intelligently bypasses 'bot detection' by rotating configurations.
         """
         strategies = [
-            # Strategy 1: Android/iOS (Highest success on standard networks)
+            # Strategy 1: Default Desktop Web (Required when passing Desktop Browser Cookies securely)
+            {"extractor_args": {"youtube": {"player_client": ["web"]}}},
+            # Strategy 2: Android/iOS (Highest success on unauthenticated networks)
             {"extractor_args": {"youtube": {"player_client": ["android", "ios"]}}},
-            # Strategy 2: Web Creator + TV (Highly successful Cloud API fallback)
+            # Strategy 3: Web Creator + TV (Highly successful Cloud API fallback without cookies)
             {"extractor_args": {"youtube": {"player_client": ["web_creator", "tv"]}}},
-            # Strategy 3: Default clients only
-            {"extractor_args": {"youtube": {"player_client": ["default"]}}},
-            # Strategy 4: Bare metadata (Native library bypass relying on headers)
+            # Strategy 4: Bare metadata
             {}
         ]
 
@@ -50,10 +50,7 @@ class DownloadService:
                     "quiet": True,
                     "source_address": "0.0.0.0",
                     "force_ipv4": True,
-                    "legacyserverconnect": True,
-                    "http_headers": {
-                        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
-                    }
+                    "legacyserverconnect": True
                 }
 
                 if self.cookies_path:
