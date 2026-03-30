@@ -15,6 +15,8 @@ if [ ! -f "$FFMPEG_DIR/ffmpeg" ]; then
     curl -L -q https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-amd64-static.tar.xz -o ffmpeg.tar.xz
     tar -xf ffmpeg.tar.xz --strip-components=1
     rm ffmpeg.tar.xz
+    chmod +x ffmpeg
+    chmod +x ffprobe
     echo "ffmpeg installed successfully"
 else
     echo "ffmpeg is already installed"

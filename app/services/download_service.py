@@ -18,7 +18,7 @@ class DownloadService:
                 if os.path.exists(path):
                     cookies_path = path
                     break
-                    
+
         self.cookies_path = cookies_path
         self.logger = logging.getLogger(__name__)
 
@@ -28,11 +28,18 @@ class DownloadService:
             "skip_download": True,
             "noplaylist": True,
             "source_address": "0.0.0.0",
+            "force_ipv4": True,
             "format": "best",
-            "extractor_args": {"youtube": {"player_client": ["ios", "tv", "web_creator"]}},
-            "legacyserverconnect": True
-        }
-        
+            "http_headers": {
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+            },
+            "extractor_args": {
+                "youtube": {
+                    "player_client": ["android", "ios"]
+                }
+            },
+            "legacyserverconnect": True}
+
         if self.cookies_path:
             ydl_opts["cookiefile"] = self.cookies_path
 
@@ -61,10 +68,11 @@ class DownloadService:
                     if not size and f.get("tbr") and info.get("duration"):
                         size = f["tbr"] * info["duration"] * 1024 / 8
 
-                    if not size:
-                        continue
-
-                    size_mb = round(size / (1024 * 1024), 2)
+                    if size:
+                        size_mb = round(size / (1024 * 1024), 2)
+                    else:
+                        size_mb = "Unknown"
+                        
                     key = (resolution, ext, size_mb)
 
                     if key in seen:
@@ -76,15 +84,19 @@ class DownloadService:
                         "ext": ext,
                         "resolution": resolution,
                         "filesize": size_mb,
-                        "url": f.get("url")  # Direct URL for streaming/redirect
+                        # Direct URL for streaming/redirect
+                        "url": f.get("url")
                     })
 
                 return {
                     "title": info.get("title"),
                     "thumbnail": info.get("thumbnail"),
                     "duration": info.get("duration"),
-                    "formats": sorted(formats, key=lambda x: (x["resolution"] != "audio", x["resolution"]))
-                }
+                    "formats": sorted(
+                        formats,
+                        key=lambda x: (
+                            x["resolution"] != "audio",
+                            x["resolution"]))}
         except Exception as e:
             self.logger.error(f"Error extracting formats: {str(e)}")
             raise
@@ -96,10 +108,17 @@ class DownloadService:
             "format": format_id,
             "noplaylist": True,
             "source_address": "0.0.0.0",
-            "extractor_args": {"youtube": {"player_client": ["ios", "tv", "web_creator"]}},
-            "legacyserverconnect": True
-        }
-        
+            "force_ipv4": True,
+            "http_headers": {
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+            },
+            "extractor_args": {
+                "youtube": {
+                    "player_client": ["android", "ios"]
+                }
+            },
+            "legacyserverconnect": True}
+
         if self.cookies_path:
             ydl_opts["cookiefile"] = self.cookies_path
 
@@ -113,7 +132,8 @@ class DownloadService:
                 if info.get('http_headers'):
                     headers.update(info['http_headers'])
 
-                return info.get("url"), info.get("title"), info.get("filesize"), headers
+                return info.get("url"), info.get(
+                    "title"), info.get("filesize"), headers
         except Exception as e:
             self.logger.error(f"Error getting download URL: {str(e)}")
             raise
@@ -130,62 +150,80 @@ class DownloadService:
             'quiet': True,
             'no_playlist': True,
             "source_address": "0.0.0.0",
-            'extractor_args': {'youtube': {'player_client': ['ios', 'tv', 'web_creator']}},
-            'legacyserverconnect': True
-        }
+            "force_ipv4": True,
+            "http_headers": {
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+            },
+            'extractor_args': {
+                'youtube': {
+                    'player_client': ["android", "ios"]
+                }
+            },
+            'legacyserverconnect': True}
         if self.cookies_path:
             ydl_opts_info["cookiefile"] = self.cookies_path
 
         try:
             with yt_dlp.YoutubeDL(ydl_opts_info) as ydl:
                 info = ydl.extract_info(url, download=False)
-                
+
                 needs_audio = False
-                chosen = next((f for f in info.get('formats', []) if f['format_id'] == format_id), None)
-                if chosen and chosen.get('vcodec') != 'none' and chosen.get('acodec') == 'none':
+                chosen = next((f for f in info.get('formats', [])
+                              if f['format_id'] == format_id), None)
+                if chosen and chosen.get(
+                        'vcodec') != 'none' and chosen.get('acodec') == 'none':
                     needs_audio = True
 
                 if needs_audio:
                     v_url = chosen['url']
-                    audio = next((f for f in reversed(info['formats']) if f.get('acodec') != 'none' and (f.get('vcodec') == 'none' or not f.get('vcodec'))), None)
+                    audio = next(
+                        (f for f in reversed(
+                            info['formats']) if f.get('acodec') != 'none' and (
+                            f.get('vcodec') == 'none' or not f.get('vcodec'))), None)
                     if not audio:
-                        audio = next((f for f in info['formats'] if f.get('acodec') != 'none'), None)
+                        audio = next(
+                            (f for f in info['formats'] if f.get('acodec') != 'none'), None)
 
                     a_url = audio['url'] if audio else v_url
-                    ua = info.get('http_headers', {}).get('User-Agent', 'Mozilla/5.0')
-                    
+                    ua = info.get(
+                        'http_headers',
+                        {}).get(
+                        'User-Agent',
+                        'Mozilla/5.0')
+
                     # Ensure headers from yt-dlp are converted to ffmpeg format
                     headers_list = []
                     for k, v in info.get('http_headers', {}).items():
                         headers_list.append(f"{k}: {v}")
-                    headers_str = "\r\n".join(headers_list) + "\r\n" if headers_list else ""
-                    
+                    headers_str = "\r\n".join(
+                        headers_list) + "\r\n" if headers_list else ""
+
                     ffmpeg_cmd = [
                         'ffmpeg',
                         '-reconnect', '1',
                         '-reconnect_streamed', '1',
                         '-reconnect_delay_max', '5'
                     ]
-                    
+
                     if headers_str:
                         ffmpeg_cmd.extend(['-headers', headers_str])
                     else:
                         ffmpeg_cmd.extend(['-user_agent', ua])
-                        
+
                     if self.cookies_path and os.path.exists(self.cookies_path):
                         # Use cookies via ffmpeg option if possible (it's safest to read and attach, or use -cookies)
                         # We will rely on ffmpeg's cookies format if supported, but typically yt-dlp handles cookies natively via URL tokens.
                         # ffmpeg supports reading Netscape cookie format:
                         ffmpeg_cmd.extend(['-cookies', self.cookies_path])
-                        
+
                     ffmpeg_cmd.extend(['-i', v_url])
-                    
+
                     ffmpeg_cmd.extend([
                         '-reconnect', '1',
                         '-reconnect_streamed', '1',
                         '-reconnect_delay_max', '5'
                     ])
-                    
+
                     if headers_str:
                         ffmpeg_cmd.extend(['-headers', headers_str])
                     else:
@@ -195,7 +233,7 @@ class DownloadService:
                         ffmpeg_cmd.extend(['-cookies', self.cookies_path])
 
                     ffmpeg_cmd.extend(['-i', a_url])
-                    
+
                     ffmpeg_cmd.extend([
                         '-c:v', 'copy',
                         '-c:a', 'copy',
@@ -204,9 +242,13 @@ class DownloadService:
                         '-f', 'matroska',
                         'pipe:1'
                     ])
-                    
-                    process = subprocess.Popen(ffmpeg_cmd, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, close_fds=True)
-                    
+
+                    process = subprocess.Popen(
+                        ffmpeg_cmd,
+                        stdout=subprocess.PIPE,
+                        stderr=subprocess.DEVNULL,
+                        close_fds=True)
+
                     def generate_ffmpeg():
                         try:
                             while True:
@@ -230,22 +272,31 @@ class DownloadService:
                 else:
                     v_url = chosen['url']
                     headers = info.get('http_headers', {})
-                    
-                    # For requests streams, ensure cookies are loaded correctly if cookie file exists
+
+                    # For requests streams, ensure cookies are loaded correctly
+                    # if cookie file exists
                     session = requests.Session()
                     if self.cookies_path and os.path.exists(self.cookies_path):
                         import http.cookiejar
-                        cookie_jar = http.cookiejar.MozillaCookieJar(self.cookies_path)
+                        cookie_jar = http.cookiejar.MozillaCookieJar(
+                            self.cookies_path)
                         try:
-                            cookie_jar.load(ignore_discard=True, ignore_expires=True)
+                            cookie_jar.load(
+                                ignore_discard=True, ignore_expires=True)
                             session.cookies.update(cookie_jar)
                         except Exception as e:
-                            self.logger.warning(f"Could not load cookies for requests: {str(e)}")
-                            
+                            self.logger.warning(
+                                f"Could not load cookies for requests: {
+                                    str(e)}")
+
                     try:
-                        r_head = session.head(v_url, headers=headers, allow_redirects=True, timeout=10)
-                        filesize = int(r_head.headers.get('Content-Length', chosen.get('filesize') or 0))
-                    except:
+                        r_head = session.head(
+                            v_url, headers=headers, allow_redirects=True, timeout=10)
+                        filesize = int(
+                            r_head.headers.get(
+                                'Content-Length',
+                                chosen.get('filesize') or 0))
+                    except BaseException:
                         filesize = chosen.get('filesize') or 0
 
                     def generate_requests():
@@ -256,11 +307,12 @@ class DownloadService:
                                     yield chunk
 
                     ext = chosen.get('ext', 'mp4') if chosen else 'mp4'
-                    # Default audio container in youtube is usually webm, if it's m4a the ext is m4a. 
+                    # Default audio container in youtube is usually webm, if
+                    # it's m4a the ext is m4a.
                     if chosen and chosen.get('vcodec') == 'none':
                         if ext == 'webm':
-                            ext = 'weba' # Or keep as webm, but weba indicates audio only
-                    
+                            ext = 'weba'  # Or keep as webm, but weba indicates audio only
+
                     return generate_requests(), info.get('title'), filesize, ext
 
         except Exception as e:

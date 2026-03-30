@@ -24,7 +24,14 @@ def get_formats():
         data = service.get_formats(url)
         return jsonify(data)
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        error_msg = str(e)
+        if "Sign in to confirm you're not a bot" in error_msg or "bot" in error_msg.lower():
+            return jsonify({"error": "YouTube bot detection triggered. Please try again later or provide a cookies.txt file."}), 500
+        elif "Private video" in error_msg:
+            return jsonify({"error": "This video is private."}), 400
+        elif "Video unavailable" in error_msg:
+            return jsonify({"error": "This video is unavailable."}), 400
+        return jsonify({"error": f"Failed to extract video formats: {error_msg}"}), 500
 
 
 @download_bp.route('/download', methods=['POST'])
@@ -44,7 +51,8 @@ def download():
 
     try:
         service = DownloadService()
-        generator_or_filepath, title, filesize, ext = service.stream_video(url, format_id)
+        generator_or_filepath, title, filesize, ext = service.stream_video(
+            url, format_id)
 
         filesize_mb = None
         if filesize:
@@ -52,7 +60,7 @@ def download():
                 filesize_mb = float(filesize) / (1024 * 1024)
             except (ValueError, TypeError):
                 pass
-                
+
         # Save to history
         history = DownloadHistory(
             user_id=current_user.id,
@@ -65,7 +73,8 @@ def download():
         db.session.commit()
 
         from flask import Response
-        safe_title = "".join([c if c.isalnum() or c in " .-_()" else "_" for c in title])
+        safe_title = "".join(
+            [c if c.isalnum() or c in " .-_()" else "_" for c in title])
 
         mime_types = {
             'mp4': 'video/mp4',
@@ -91,6 +100,10 @@ def download():
         )
 
     except Exception as e:
-        current_app.logger.error(f"Download route error for user {current_user.id}: {str(e)}", exc_info=True)
+        current_app.logger.error(
+            f"Download route error for user {
+                current_user.id}: {
+                str(e)}",
+            exc_info=True)
         flash(f'Download failed: {str(e)}', 'danger')
         return redirect(url_for('main.index'))

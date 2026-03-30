@@ -14,7 +14,12 @@ def is_valid_video_url(url):
     if not all([parsed.scheme, parsed.netloc]):
         return False
 
-    # Check for dangerous characters (yt-dlp handles many, but extra safety is good)
+    # Enforce strict http/https scheme to prevent SSRF or file reads
+    if parsed.scheme.lower() not in ['http', 'https']:
+        return False
+
+    # Check for dangerous characters (yt-dlp handles many, but extra safety is
+    # good)
     if any(char in url for char in [';', '&', '|', '>', '<', '`', '$']):
         return False
 
@@ -28,4 +33,5 @@ def is_valid_video_url(url):
     if domain.startswith('www.'):
         domain = domain[4:]
 
-    return any(domain == d or domain.endswith('.' + d) for d in allowed_domains)
+    return any(domain == d or domain.endswith('.' + d)
+               for d in allowed_domains)

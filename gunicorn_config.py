@@ -16,7 +16,7 @@ worker_connections = 1000
 # Timeouts
 # Increased timeout to handle large video processing/streaming
 timeout = 600 
-keepalive = 5
+keepalive = 65
 
 # Logging
 accesslog = "-"
