@@ -286,8 +286,7 @@ class DownloadService:
                             session.cookies.update(cookie_jar)
                         except Exception as e:
                             self.logger.warning(
-                                f"Could not load cookies for requests: {
-                                    str(e)}")
+                                f"Could not load cookies for requests: {str(e)}")
 
                     try:
                         r_head = session.head(

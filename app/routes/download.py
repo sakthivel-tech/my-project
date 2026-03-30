@@ -101,9 +101,7 @@ def download():
 
     except Exception as e:
         current_app.logger.error(
-            f"Download route error for user {
-                current_user.id}: {
-                str(e)}",
+            f"Download route error for user {current_user.id}: {str(e)}",
             exc_info=True)
         flash(f'Download failed: {str(e)}', 'danger')
         return redirect(url_for('main.index'))
