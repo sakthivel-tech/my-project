@@ -9,15 +9,17 @@ import http.cookiejar
 class DownloadService:
     def __init__(self, cookies_path=None):
         if not cookies_path:
+            base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
             default_paths = [
                 os.environ.get('YTDLP_COOKIES_PATH', ''),
                 '/etc/secrets/cookies.txt',
-                os.path.join(os.getcwd(), 'cookies', 'cookies.txt.txt'),
-                os.path.join(os.getcwd(), 'cookies', 'cookies.txt'),
-                os.path.join(os.getcwd(), 'cookies.txt')
+                os.path.join(base_dir, 'cookies', 'cookies.txt.txt'),
+                os.path.join(base_dir, 'cookies', 'cookies.txt'),
+                os.path.join(base_dir, 'cookies.txt'),
+                os.path.join(os.getcwd(), 'cookies', 'cookies.txt')
             ]
             for path in default_paths:
-                if os.path.exists(path):
+                if path and os.path.isfile(path):
                     cookies_path = path
                     break
 
