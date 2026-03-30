@@ -1,6 +1,3 @@
-import gevent.monkey
-gevent.monkey.patch_all()
-
 import multiprocessing
 import os
 
@@ -8,10 +5,10 @@ import os
 bind = "0.0.0.0:" + os.environ.get("PORT", "10000")
 
 # Worker configuration
-# Using gevent or eventlet is better for long-running streaming connections
-worker_class = 'gevent'
+# Using gthread is safer for PostgreSQL and subprocess pipes on Render
+worker_class = 'gthread'
 workers = 2  # Hardcoded low worker count to prevent OOM on Render Starter
-worker_connections = 1000
+threads = 4  # Gives enough concurrency per worker for streaming
 
 # Timeouts
 # Increased timeout to handle large video processing/streaming
