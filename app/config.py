@@ -27,6 +27,12 @@ class Config:
     # Security
     RATELIMIT_DEFAULT = "200 per day; 50 per hour"
 
+    # Celery & Redis
+    REDIS_URL = os.environ.get('REDIS_URL', 'redis://localhost:6379/0')
+    CELERY_BROKER_URL = os.environ.get('CELERY_BROKER_URL', REDIS_URL)
+    CELERY_RESULT_BACKEND = os.environ.get('CELERY_RESULT_BACKEND', REDIS_URL)
+    CACHE_DEFAULT_TIMEOUT = 3600  # 1 hour
+
 
 class ProductionConfig(Config):
     DEBUG = False

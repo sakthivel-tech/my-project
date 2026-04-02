@@ -1,10 +1,13 @@
 import yt_dlp
 import os
-import sys
 import logging
 import subprocess
 import requests
 import http.cookiejar
+import redis
+import json
+import hashlib
+from flask import current_app
 
 class DownloadService:
     def __init__(self, cookies_path=None):
@@ -25,66 +28,48 @@ class DownloadService:
 
         self.cookies_path = cookies_path
         self.logger = logging.getLogger(__name__)
+        
+        # Initialize Redis for caching
+        try:
+            self.redis_client = redis.from_url(current_app.config.get('REDIS_URL', 'redis://localhost:6379/0'))
+        except Exception as e:
+            self.logger.warning(f"Redis initialization failed: {str(e)}")
+            self.redis_client = None
 
-    def _execute_with_retry(self, action_name, func, url=None):
-        """
-        Executes a yt-dlp function block across multiple signature strategies.
-        This intelligently bypasses 'bot detection' by rotating configurations.
-        """
-        strategies = [
-            # Strategy 1: Default Desktop Web (Required when passing Desktop Browser Cookies securely)
-            {"extractor_args": {"youtube": {"player_client": ["web"]}}},
-            # Strategy 2: Android/iOS (Highest success on unauthenticated networks)
-            {"extractor_args": {"youtube": {"player_client": ["android", "ios"]}}},
-            # Strategy 3: Web Creator + TV (Highly successful Cloud API fallback without cookies)
-            {"extractor_args": {"youtube": {"player_client": ["web_creator", "tv"]}}},
-            # Strategy 4: Bare metadata
-            {}
-        ]
-
-        last_error = None
-        for i, strategy_config in enumerate(strategies):
-            try:
-                self.logger.info(f"[{action_name}] Extracting '{url}' | Attempt {i+1}/4 | Config: {strategy_config}")
-
-                # Base secure configuration for Render
-                ydl_opts = {
-                    "quiet": True,
-                    "source_address": "0.0.0.0",
-                    "force_ipv4": True,
-                    "legacyserverconnect": True
-                }
-
-                if self.cookies_path:
-                    ydl_opts["cookiefile"] = self.cookies_path
-
-                # Inject dynamic strategy
-                ydl_opts.update(strategy_config)
-
-                # Return the execution payload precisely
-                result = func(ydl_opts)
-                if not result:
-                    raise ValueError(f"[{action_name}] Function returned empty payload.")
-                
-                self.logger.info(f"[{action_name}] SUCCESS on Attempt {i+1}!")
-                return result
-
-            except Exception as e:
-                error_msg = str(e).lower()
-                last_error = e
-                self.logger.warning(f"[{action_name}] Strategy {i+1} failed: {error_msg}")
-
-                # Break immediately on permanent URL errors to save bandwidth
-                if any(err in error_msg for err in ["private video", "members-only", "unavailable", "copyright"]):
-                    self.logger.error(f"[{action_name}] Permanent fetch error: {error_msg}")
-                    raise e
-                    
-                continue
-
-        self.logger.error(f"[{action_name}] ALL STRATEGIES EXHAUSTED for '{url}'. Render IP may be hard-blocked. Provide cookies.txt!")
-        raise last_error
+    def _get_cache_key(self, url):
+        return f"yt_formats:{hashlib.md5(url.encode()).hexdigest()}"
 
     def get_formats(self, url):
+        """Web-server facing method to get quality formats."""
+        # 1. Check Cache
+        if self.redis_client:
+            cached = self.redis_client.get(self._get_cache_key(url))
+            if cached:
+                self.logger.info(f"Cache HIT for {url}")
+                return json.loads(cached)
+
+        # 2. Trigger Celery Task and wait (Synchronous wait for async worker)
+        from .tasks import extract_video_info_task
+        try:
+            self.logger.info(f"Triggering Celery task for {url}")
+            result = extract_video_info_task.delay(url)
+            data = result.get(timeout=45) # Wait up to 45 seconds
+            
+            # 3. Cache result
+            if self.redis_client and data:
+                self.redis_client.setex(
+                    self._get_cache_key(url),
+                    current_app.config.get('CACHE_DEFAULT_TIMEOUT', 3600),
+                    json.dumps(data)
+                )
+            return data
+        except Exception as e:
+            self.logger.error(f"Celery task failed or timed out: {str(e)}")
+            # Fallback to local extraction if worker fails (optional, but requested separation)
+            raise e
+
+    def _extract_info_logic(self, url):
+        """The actual yt-dlp extraction logic (to be run in Worker)."""
         def _extract(opts):
             opts_copy = opts.copy()
             opts_copy.update({
@@ -140,7 +125,6 @@ class DownloadService:
                     })
 
                 if not formats:
-                    # Throw error so the retry loop engages!
                     raise ValueError("Blocked: Extracted formats array is empty.")
 
                 return {
@@ -153,170 +137,164 @@ class DownloadService:
                     )
                 }
 
-        # Route the extraction through the retry engine
-        return self._execute_with_retry("get_formats", _extract, url=url)
+        return self._execute_with_retry("extract_info", _extract, url=url)
 
-    def get_download_url(self, url, format_id):
+    def _get_ydl_opts(self, strategy_config):
+        """Centralized yt-dlp options configuration."""
+        ydl_opts = {
+            "quiet": True,
+            "no_warnings": True,
+            "nocheckcertificate": True,
+            "ignoreerrors": True,
+            "source_address": "0.0.0.0",
+            "force_ipv4": True,
+            "legacyserverconnect": True,
+            "referer": "https://www.youtube.com/",
+            "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+        }
+        
+        if self.cookies_path:
+            ydl_opts["cookiefile"] = self.cookies_path
+            
+        ydl_opts.update(strategy_config)
+        return ydl_opts
+
+    def _execute_with_retry(self, action_name, func, url=None):
+        strategies = [
+            # Strategy 1: Android/iOS (Highest success on unauthenticated networks)
+            {"extractor_args": {"youtube": {"player_client": ["android", "ios"]}}},
+            # Strategy 2: Web Creator + TV (Highly successful Cloud API fallback)
+            {"extractor_args": {"youtube": {"player_client": ["web_creator", "tv"]}}},
+            # Strategy 3: Default Desktop Web
+            {"extractor_args": {"youtube": {"player_client": ["web"]}}},
+            # Strategy 4: Bare metadata
+            {}
+        ]
+
+        last_error = None
+        for i, strategy_config in enumerate(strategies):
+            try:
+                self.logger.info(f"[{action_name}] Attempt {i+1}/4 | Config: {strategy_config}")
+                ydl_opts = self._get_ydl_opts(strategy_config)
+                result = func(ydl_opts)
+                if not result:
+                    raise ValueError("Function returned empty payload.")
+                return result
+            except Exception as e:
+                error_msg = str(e).lower()
+                last_error = e
+                self.logger.warning(f"[{action_name}] Strategy {i+1} failed: {error_msg}")
+                if any(err in error_msg for err in ["private video", "members-only", "unavailable", "copyright"]):
+                    raise e
+                continue
+
+        raise last_error
+
+    def _get_streaming_logic(self, url, format_id):
+        """Worker logic to get streaming metadata."""
         def _extract(opts):
             opts_copy = opts.copy()
-            opts_copy.update({
-                "format": format_id,
-                "noplaylist": True
-            })
-            
+            opts_copy.update({'no_playlist': True})
             with yt_dlp.YoutubeDL(opts_copy) as ydl:
                 info = ydl.extract_info(url, download=False)
-                headers = {
-                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-                }
-                if info.get('http_headers'):
-                    headers.update(info['http_headers'])
-
-                url_payload = info.get("url")
-                if not url_payload:
-                    raise ValueError("Blocked: Payload 'url' not found in response.")
-
-                return url_payload, info.get("title"), info.get("filesize"), headers
-
-        return self._execute_with_retry(f"get_download_url [{format_id}]", _extract, url=url)
+                if not info:
+                    raise ValueError("Required streaming metadata is missing.")
+                return info
+        return self._execute_with_retry("get_streaming_info", _extract, url=url)
 
     def stream_video(self, url, format_id):
-        def _extract_and_stream(opts):
-            opts_copy = opts.copy()
-            opts_copy.update({'no_playlist': True})
+        """Web-server handles streaming, using data extracted by Worker."""
+        from .tasks import get_streaming_info_task
+        try:
+            result = get_streaming_info_task.delay(url, format_id)
+            info = result.get(timeout=30)
             
-            with yt_dlp.YoutubeDL(opts_copy) as ydl:
-                info = ydl.extract_info(url, download=False)
+            # Now proceed with streaming logic (same as before but using 'info')
+            return self._process_streaming_info(info, format_id)
+        except Exception as e:
+            self.logger.error(f"Streaming info task failed: {str(e)}")
+            raise e
+
+    def _process_streaming_info(self, info, format_id):
+        """Logic to handle ffmpeg or requests streaming based on info."""
+        needs_audio = False
+        chosen = next((f for f in info.get('formats', []) if f['format_id'] == format_id), None)
+        
+        if not chosen:
+            raise ValueError(f"Could not locate matching format_id {format_id}")
+            
+        if chosen.get('vcodec') != 'none' and chosen.get('acodec') == 'none':
+            needs_audio = True
+
+        if needs_audio:
+            # FFMPEG Logic
+            v_url = chosen['url']
+            audio = next((f for f in reversed(info['formats']) if f.get('acodec') != 'none' and (f.get('vcodec') == 'none' or not f.get('vcodec'))), None)
+            if not audio:
+                audio = next((f for f in info['formats'] if f.get('acodec') != 'none'), None)
+
+            a_url = audio['url'] if audio else v_url
+            headers_list = [f"{k}: {v}" for k, v in info.get('http_headers', {}).items()]
+            headers_str = "\r\n".join(headers_list) + "\r\n" if headers_list else ""
+
+            ffmpeg_cmd = [
+                'ffmpeg', '-reconnect', '1', '-reconnect_streamed', '1', '-reconnect_delay_max', '5'
+            ]
+            if headers_str:
+                ffmpeg_cmd.extend(['-headers', headers_str])
+            if self.cookies_path and os.path.exists(self.cookies_path):
+                ffmpeg_cmd.extend(['-cookies', self.cookies_path])
+            
+            ffmpeg_cmd.extend(['-i', v_url])
+            ffmpeg_cmd.extend(['-reconnect', '1', '-reconnect_streamed', '1', '-reconnect_delay_max', '5'])
+            if headers_str:
+                ffmpeg_cmd.extend(['-headers', headers_str])
+            if self.cookies_path and os.path.exists(self.cookies_path):
+                ffmpeg_cmd.extend(['-cookies', self.cookies_path])
                 
-                # Double-verify info load
-                if not info or not info.get('formats'):
-                    raise ValueError("Blocked: Required streaming metadata is totally missing.")
+            ffmpeg_cmd.extend(['-i', a_url])
+            ffmpeg_cmd.extend(['-c:v', 'copy', '-c:a', 'copy', '-map', '0:v:0', '-map', '1:a:0', '-f', 'matroska', 'pipe:1'])
 
-                needs_audio = False
-                chosen = next((f for f in info.get('formats', []) if f['format_id'] == format_id), None)
-                
-                if not chosen:
-                    raise ValueError(f"Could not locate matching format_id {format_id}")
-                    
-                if chosen.get('vcodec') != 'none' and chosen.get('acodec') == 'none':
-                    needs_audio = True
+            process = subprocess.Popen(ffmpeg_cmd, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, close_fds=True)
 
-                if needs_audio:
-                    v_url = chosen['url']
-                    audio = next(
-                        (f for f in reversed(
-                            info['formats']) if f.get('acodec') != 'none' and (
-                            f.get('vcodec') == 'none' or not f.get('vcodec'))), None)
-                    if not audio:
-                        audio = next(
-                            (f for f in info['formats'] if f.get('acodec') != 'none'), None)
+            def generate_ffmpeg():
+                try:
+                    while True:
+                        chunk = process.stdout.read(65536)
+                        if not chunk: break
+                        yield chunk
+                finally:
+                    process.stdout.close()
+                    if process.poll() is None: process.kill()
+                    process.wait()
 
-                    a_url = audio['url'] if audio else v_url
-                    ua = info.get('http_headers', {}).get('User-Agent', 'Mozilla/5.0')
+            return generate_ffmpeg(), info.get('title'), chosen.get('filesize'), 'mkv'
 
-                    headers_list = []
-                    for k, v in info.get('http_headers', {}).items():
-                        headers_list.append(f"{k}: {v}")
-                    headers_str = "\r\n".join(headers_list) + "\r\n" if headers_list else ""
+        else:
+            # Requests Logic
+            v_url = chosen['url']
+            headers = info.get('http_headers', {})
+            session = requests.Session()
+            if self.cookies_path and os.path.exists(self.cookies_path):
+                cookie_jar = http.cookiejar.MozillaCookieJar(self.cookies_path)
+                try:
+                    cookie_jar.load(ignore_discard=True, ignore_expires=True)
+                    session.cookies.update(cookie_jar)
+                except Exception: pass
 
-                    ffmpeg_cmd = [
-                        'ffmpeg',
-                        '-reconnect', '1',
-                        '-reconnect_streamed', '1',
-                        '-reconnect_delay_max', '5'
-                    ]
+            try:
+                r_head = session.head(v_url, headers=headers, allow_redirects=True, timeout=10)
+                filesize = int(r_head.headers.get('Content-Length', chosen.get('filesize') or 0))
+            except Exception:
+                filesize = chosen.get('filesize') or 0
 
-                    if headers_str:
-                        ffmpeg_cmd.extend(['-headers', headers_str])
-                    else:
-                        ffmpeg_cmd.extend(['-user_agent', ua])
+            def generate_requests():
+                with session.get(v_url, headers=headers, stream=True, timeout=15) as r:
+                    r.raise_for_status()
+                    for chunk in r.iter_content(chunk_size=65536):
+                        if chunk: yield chunk
 
-                    if self.cookies_path and os.path.exists(self.cookies_path):
-                        ffmpeg_cmd.extend(['-cookies', self.cookies_path])
-
-                    ffmpeg_cmd.extend(['-i', v_url])
-
-                    ffmpeg_cmd.extend([
-                        '-reconnect', '1',
-                        '-reconnect_streamed', '1',
-                        '-reconnect_delay_max', '5'
-                    ])
-
-                    if headers_str:
-                        ffmpeg_cmd.extend(['-headers', headers_str])
-                    else:
-                        ffmpeg_cmd.extend(['-user_agent', ua])
-
-                    if self.cookies_path and os.path.exists(self.cookies_path):
-                        ffmpeg_cmd.extend(['-cookies', self.cookies_path])
-
-                    ffmpeg_cmd.extend(['-i', a_url])
-
-                    ffmpeg_cmd.extend([
-                        '-c:v', 'copy',
-                        '-c:a', 'copy',
-                        '-map', '0:v:0',
-                        '-map', '1:a:0',
-                        '-f', 'matroska',
-                        'pipe:1'
-                    ])
-
-                    process = subprocess.Popen(
-                        ffmpeg_cmd,
-                        stdout=subprocess.PIPE,
-                        stderr=subprocess.DEVNULL,
-                        close_fds=True)
-
-                    def generate_ffmpeg():
-                        try:
-                            while True:
-                                chunk = process.stdout.read(65536)
-                                if not chunk:
-                                    break
-                                yield chunk
-                        finally:
-                            process.stdout.close()
-                            if process.poll() is None:
-                                process.kill()
-                            process.wait()
-
-                    ext = 'mkv'
-                    filesize = chosen.get('filesize')
-                    if not filesize and audio:
-                        filesize = None
-                    return generate_ffmpeg(), info.get('title'), filesize, ext
-
-                else:
-                    v_url = chosen['url']
-                    headers = info.get('http_headers', {})
-
-                    session = requests.Session()
-                    if self.cookies_path and os.path.exists(self.cookies_path):
-                        cookie_jar = http.cookiejar.MozillaCookieJar(self.cookies_path)
-                        try:
-                            cookie_jar.load(ignore_discard=True, ignore_expires=True)
-                            session.cookies.update(cookie_jar)
-                        except Exception as e:
-                            self.logger.warning(f"Could not load cookies for requests: {str(e)}")
-
-                    try:
-                        r_head = session.head(v_url, headers=headers, allow_redirects=True, timeout=10)
-                        filesize = int(r_head.headers.get('Content-Length', chosen.get('filesize') or 0))
-                    except BaseException:
-                        filesize = chosen.get('filesize') or 0
-
-                    def generate_requests():
-                        with session.get(v_url, headers=headers, stream=True, timeout=15) as r:
-                            r.raise_for_status()
-                            for chunk in r.iter_content(chunk_size=65536):
-                                if chunk:
-                                    yield chunk
-
-                    ext = chosen.get('ext', 'mp4') if chosen else 'mp4'
-                    if chosen and chosen.get('vcodec') == 'none':
-                        if ext == 'webm':
-                            ext = 'weba'
-
-                    return generate_requests(), info.get('title'), filesize, ext
-
-        return self._execute_with_retry("stream_video", _extract_and_stream, url=url)
+            ext = chosen.get('ext', 'mp4')
+            if chosen.get('vcodec') == 'none' and ext == 'webm':
+                ext = 'weba'
+            return generate_requests(), info.get('title'), filesize, ext

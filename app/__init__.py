@@ -6,11 +6,13 @@ from flask_limiter.util import get_remote_address
 from flask_talisman import Talisman
 from .config import config_by_name
 from .models import db, User
+from celery import Celery
 
 login_manager = LoginManager()
 csrf = CSRFProtect()
 limiter = Limiter(key_func=get_remote_address, storage_uri="memory://")
 talisman = Talisman()
+celery = Celery(__name__)
 
 
 def create_app(config_name='prod'):
@@ -21,6 +23,12 @@ def create_app(config_name='prod'):
     login_manager.init_app(app)
     csrf.init_app(app)
     limiter.init_app(app)
+
+    # Configure Celery
+    celery.conf.update(app.config)
+    
+    # Optional: ensure tasks are loaded
+    from . import tasks
 
     csp = {
         'default-src': ['\'self\''],
