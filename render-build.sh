@@ -4,6 +4,7 @@ set -o errexit
 
 echo "Installing dependencies..."
 pip install -r requirements.txt
+chmod +x run_all.sh
 
 echo "Installing ffmpeg..."
 # yt-dlp will look for ffmpeg in PATH
