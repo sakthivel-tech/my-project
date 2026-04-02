@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: video-vault-pro
+    name: vid-tool-downloader
     env: python
     buildCommand: chmod +x render-build.sh && ./render-build.sh
     startCommand: export PATH="/opt/render/project/src/ffmpeg:$PATH" && gunicorn -c gunicorn_config.py -b 0.0.0.0:$PORT run:app
@@ -11,16 +11,16 @@ services:
         generateValue: true
       - key: DATABASE_URL
         fromDatabase:
-          name: videovault_db
+          name: vidtool_db
           property: connectionString
       - key: REDIS_URL
         fromService:
-          name: videovault-redis
+          name: vidtool-redis
           type: redis
           property: connectionString
 
   - type: worker
-    name: video-vault-worker
+    name: vid-tool-worker
     env: python
     buildCommand: chmod +x render-build.sh && ./render-build.sh
     startCommand: export PATH="/opt/render/project/src/ffmpeg:$PATH" && celery -A run.celery worker --loglevel=info
@@ -29,19 +29,19 @@ services:
         value: prod
       - key: DATABASE_URL
         fromDatabase:
-          name: videovault_db
+          name: vidtool_db
           property: connectionString
       - key: REDIS_URL
         fromService:
-          name: videovault-redis
+          name: vidtool-redis
           type: redis
           property: connectionString
 
 databases:
-  - name: videovault_db
+  - name: vidtool_db
     plan: free
 
 redis:
-  - name: videovault-redis
+  - name: vidtool-redis
     plan: free
     ipAllowList: [] # Only allow internal connections
