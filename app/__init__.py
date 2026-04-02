@@ -24,10 +24,10 @@ def create_app(config_name='prod'):
     csrf.init_app(app)
     limiter.init_app(app)
 
-    # Configure Celery
+    # Configure Celery with app config
     celery.conf.update(app.config)
     
-    # Optional: ensure tasks are loaded
+    # Initialize tasks within app context
     from . import tasks
 
     csp = {

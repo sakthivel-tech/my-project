@@ -31,7 +31,14 @@ class DownloadService:
         
         # Initialize Redis for caching
         try:
-            self.redis_client = redis.from_url(current_app.config.get('REDIS_URL', 'redis://localhost:6379/0'))
+            # Check for standard config or environment fallbacks
+            redis_url = current_app.config.get('REDIS_URL', 'redis://localhost:6379/0')
+            if 'localhost' in redis_url:
+                redis_url = (os.environ.get('INTERNAL_REDIS_URL') or 
+                             os.environ.get('REDIS_URL') or 
+                             redis_url)
+            
+            self.redis_client = redis.from_url(redis_url)
         except Exception as e:
             self.logger.warning(f"Redis initialization failed: {str(e)}")
             self.redis_client = None

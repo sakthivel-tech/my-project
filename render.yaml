@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: vid-tool-downloader
+    name: vid-tool-downloder
     env: python
     buildCommand: chmod +x render-build.sh && ./render-build.sh
     startCommand: export PATH="/opt/render/project/src/ffmpeg:$PATH" && gunicorn -c gunicorn_config.py -b 0.0.0.0:$PORT run:app
