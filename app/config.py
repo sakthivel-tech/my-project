@@ -33,6 +33,11 @@ class Config:
     
     CELERY_BROKER_URL = REDIS_URL
     CELERY_RESULT_BACKEND = REDIS_URL
+    
+    # Modern Celery settings (Lowercase)
+    broker_url = REDIS_URL
+    result_backend = REDIS_URL
+    
     CACHE_DEFAULT_TIMEOUT = 3600  # 1 hour
 
 

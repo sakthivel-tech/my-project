@@ -26,6 +26,9 @@ def create_app(config_name='prod'):
 
     # Configure Celery with app config
     celery.conf.update(app.config)
+    # Explicitly set these for older/newer Celery version compatibility
+    celery.conf.broker_url = app.config.get('CELERY_BROKER_URL')
+    celery.conf.result_backend = app.config.get('CELERY_RESULT_BACKEND')
     
     # Initialize tasks within app context
     from . import tasks
