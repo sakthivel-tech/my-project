@@ -56,7 +56,7 @@ class DownloadService:
                 return json.loads(cached)
 
         # 2. Trigger Celery Task and wait (Synchronous wait for async worker)
-        from .tasks import extract_video_info_task
+        from app.tasks import extract_video_info_task
         try:
             self.logger.info(f"Triggering Celery task for {url}")
             result = extract_video_info_task.delay(url)
@@ -211,7 +211,7 @@ class DownloadService:
 
     def stream_video(self, url, format_id):
         """Web-server handles streaming, using data extracted by Worker."""
-        from .tasks import get_streaming_info_task
+        from app.tasks import get_streaming_info_task
         try:
             result = get_streaming_info_task.delay(url, format_id)
             info = result.get(timeout=30)
