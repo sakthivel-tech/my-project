@@ -8,6 +8,13 @@ from ..utils.validators import is_valid_video_url
 download_bp = Blueprint('download', __name__)
 
 
+@download_bp.route('/diag')
+def diag():
+    """Diagnostic route to check Redis connectivity."""
+    from ..services.download_service import DownloadService
+    return jsonify(DownloadService.check_connection_diag())
+
+
 @download_bp.route('/get_formats', methods=['POST'])
 @login_required
 @limiter.limit("5 per minute")

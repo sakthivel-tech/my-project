@@ -43,6 +43,48 @@ class DownloadService:
             self.logger.warning(f"Redis initialization failed: {str(e)}")
             self.redis_client = None
 
+    @staticmethod
+    def check_connection_diag():
+        """Diagnostic method to check Redis connection status."""
+        import os
+        from urllib.parse import urlparse
+        
+        # 1. Environment Audit
+        internal_redis = os.environ.get('INTERNAL_REDIS_URL')
+        public_redis = os.environ.get('REDIS_URL')
+        
+        def mask_url(url):
+            if not url: return "None"
+            parsed = urlparse(url)
+            return f"{parsed.scheme}://****:****@{parsed.hostname}:{parsed.port}{parsed.path}"
+
+        results = {
+            "INTERNAL_REDIS_URL_PRESENT": bool(internal_redis),
+            "INTERNAL_REDIS_URL_MASKED": mask_url(internal_redis),
+            "REDIS_URL_PRESENT": bool(public_redis),
+            "REDIS_URL_MASKED": mask_url(public_redis),
+            "CONNECTIVITY_RESULT": "Testing..."
+        }
+
+        # 2. Connection Test
+        try:
+            from flask import current_app
+            target_url = (os.environ.get('INTERNAL_REDIS_URL') or 
+                         os.environ.get('REDIS_URL') or 
+                         current_app.config.get('REDIS_URL'))
+            
+            if not target_url:
+                results["CONNECTIVITY_RESULT"] = "FAILED: No URL found in environment or config"
+                return results
+
+            test_client = redis.from_url(target_url, socket_timeout=5, socket_connect_timeout=5)
+            test_client.ping()
+            results["CONNECTIVITY_RESULT"] = "SUCCESS: Pong!"
+        except Exception as e:
+            results["CONNECTIVITY_RESULT"] = f"FAILED: {str(e)}"
+            
+        return results
+
     def _get_cache_key(self, url):
         return f"yt_formats:{hashlib.md5(url.encode()).hexdigest()}"
 
