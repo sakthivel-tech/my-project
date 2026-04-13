@@ -175,20 +175,32 @@ class DownloadService:
                 formats = []
                 seen = set()
 
-                for f in info.get("formats", []):
-                    if f.get("protocol") in ("mhtml", "http_dash_segments"):
+                has_formats = "formats" in info
+                format_list = info.get("formats", [info]) if has_formats else [info]
+
+                for f in format_list:
+                    # Skip storyboards only
+                    if f.get("protocol") in ("mhtml",):
                         continue
 
-                    if f.get("vcodec") == "none" and f.get("acodec") == "none":
+                    vcodec = f.get("vcodec")
+                    acodec = f.get("acodec")
+
+                    # Skip entirely empty/useless streams
+                    if vcodec == "none" and acodec == "none":
                         continue
 
-                    resolution = "audio"
+                    resolution = "Unknown"
                     if f.get("height"):
                         resolution = f"{f['height']}p"
-                    elif f.get("acodec") == "none":
-                        continue
+                    elif f.get("width"):
+                        resolution = f"{f['width']}w"
+                    elif vcodec != "none" and vcodec is not None:
+                        resolution = "video"
+                    elif acodec != "none" and acodec is not None:
+                        resolution = "audio"
 
-                    ext = f.get("ext")
+                    ext = f.get("ext", "unknown")
                     size = f.get("filesize") or f.get("filesize_approx")
 
                     if not size and f.get("tbr") and info.get("duration"):
@@ -206,7 +218,7 @@ class DownloadService:
                     seen.add(key)
 
                     formats.append({
-                        "format_id": f["format_id"],
+                        "format_id": f.get("format_id", "unknown"),
                         "ext": ext,
                         "resolution": resolution,
                         "filesize": size_mb,
@@ -214,7 +226,7 @@ class DownloadService:
                     })
 
                 if not formats:
-                    raise ValueError("Blocked: Extracted formats array is empty.")
+                    raise ValueError("Blocked: Extracted formats array is empty. No valid streams found.")
 
                 return {
                     "title": info.get("title"),
