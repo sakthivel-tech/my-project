@@ -155,8 +155,7 @@ class DownloadService:
             opts_copy = opts.copy()
             opts_copy.update({
                 "skip_download": True,
-                "noplaylist": True,
-                "format": "best"
+                "noplaylist": True
             })
             
             with yt_dlp.YoutubeDL(opts_copy) as ydl:
@@ -231,7 +230,7 @@ class DownloadService:
             "quiet": True,
             "no_warnings": True,
             "nocheckcertificate": True,
-            "ignoreerrors": True,
+            "ignoreerrors": False,
             "source_address": "0.0.0.0",
             "force_ipv4": True,
             "legacyserverconnect": True,
