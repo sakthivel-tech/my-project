@@ -23,11 +23,15 @@ class DownloadService:
             ]
             for path in default_paths:
                 if path and os.path.isfile(path):
+                    cookies_path = path
+                    self.logger.info(f"Detected cookies file at: {path}")
                     break
             
             # Relocate cookies to a writable directory if needed (Fixes [Errno 30] Read-only file system)
             if cookies_path:
                 cookies_path = self._relocate_cookies(cookies_path)
+            else:
+                self.logger.warning("No cookies.txt found. Operating in unauthenticated mode (high risk of bot detection).")
 
         self.cookies_path = cookies_path
         self.logger = logging.getLogger(__name__)
@@ -250,9 +254,11 @@ class DownloadService:
             {"extractor_args": {"youtube": {"player_client": ["android", "ios"]}}},
             # Strategy 2: Web Creator + TV (Highly successful Cloud API fallback)
             {"extractor_args": {"youtube": {"player_client": ["web_creator", "tv"]}}},
-            # Strategy 3: Default Desktop Web
+            # Strategy 3: Mobile Web (Very effective with cookies on cloud servers)
+            {"extractor_args": {"youtube": {"player_client": ["mweb"]}}},
+            # Strategy 4: Default Desktop Web
             {"extractor_args": {"youtube": {"player_client": ["web"]}}},
-            # Strategy 4: Bare metadata
+            # Strategy 5: Bare metadata
             {}
         ]
 
