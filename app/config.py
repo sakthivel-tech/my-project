@@ -28,13 +28,16 @@ class Config:
     RATELIMIT_DEFAULT = "200 per day; 50 per hour"
 
     # Celery & Redis (Robust detection for Render)
-    _redis = os.environ.get('INTERNAL_REDIS_URL') or os.environ.get('REDIS_URL')
-    REDIS_URL = _redis if _redis else 'redis://localhost:6379/0'
+    # Priority: Internal Redis URL (for same-project communication) -> Public REDIS_URL -> localhost
+    INTERNAL_REDIS = os.environ.get('INTERNAL_REDIS_URL')
+    PUBLIC_REDIS = os.environ.get('REDIS_URL')
+    
+    REDIS_URL = INTERNAL_REDIS or PUBLIC_REDIS or 'redis://localhost:6379/0'
     
     CELERY_BROKER_URL = REDIS_URL
     CELERY_RESULT_BACKEND = REDIS_URL
     
-    # Modern Celery settings (Lowercase)
+    # Modern Celery settings (Lowercase for newer versions)
     broker_url = REDIS_URL
     result_backend = REDIS_URL
     

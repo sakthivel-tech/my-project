@@ -97,24 +97,32 @@ class DownloadService:
                 self.logger.info(f"Cache HIT for {url}")
                 return json.loads(cached)
 
-        # 2. Trigger Celery Task and wait (Synchronous wait for async worker)
+        # 2. Trigger Celery Task and wait
         from app.tasks import extract_video_info_task
         try:
             self.logger.info(f"Triggering Celery task for {url}")
             result = extract_video_info_task.delay(url)
-            data = result.get(timeout=45) # Wait up to 45 seconds
+            data = result.get(timeout=45)
             
             # 3. Cache result
             if self.redis_client and data:
-                self.redis_client.setex(
-                    self._get_cache_key(url),
-                    current_app.config.get('CACHE_DEFAULT_TIMEOUT', 3600),
-                    json.dumps(data)
-                )
+                try:
+                    self.redis_client.setex(
+                        self._get_cache_key(url),
+                        current_app.config.get('CACHE_DEFAULT_TIMEOUT', 3600),
+                        json.dumps(data)
+                    )
+                except Exception as cache_err:
+                    self.logger.warning(f"Failed to cache result in Redis: {str(cache_err)}")
             return data
         except Exception as e:
+            # Check if this looks like a Redis/Broker connection error
+            err_msg = str(e).lower()
+            if any(key in err_msg for key in ["connection refused", "timeout", "network unreachable", "broker"]):
+                self.logger.warning(f"Celery/Redis unavailable. Falling back to local extraction: {str(e)}")
+                return self._extract_info_logic(url)
+            
             self.logger.error(f"Celery task failed or timed out: {str(e)}")
-            # Fallback to local extraction if worker fails (optional, but requested separation)
             raise e
 
     def _extract_info_logic(self, url):
@@ -260,17 +268,21 @@ class DownloadService:
         return self._execute_with_retry("get_streaming_info", _extract, url=url)
 
     def stream_video(self, url, format_id):
-        """Web-server handles streaming, using data extracted by Worker."""
+        """Web-server handles streaming, using data extracted by Worker (with local fallback)."""
         from app.tasks import get_streaming_info_task
         try:
             result = get_streaming_info_task.delay(url, format_id)
             info = result.get(timeout=30)
-            
-            # Now proceed with streaming logic (same as before but using 'info')
-            return self._process_streaming_info(info, format_id)
         except Exception as e:
-            self.logger.error(f"Streaming info task failed: {str(e)}")
-            raise e
+            err_msg = str(e).lower()
+            if any(key in err_msg for key in ["connection refused", "timeout", "network unreachable", "broker"]):
+                self.logger.warning(f"Celery/Redis unavailable. Falling back to local streaming info: {str(e)}")
+                info = self._get_streaming_logic(url, format_id)
+            else:
+                self.logger.error(f"Streaming info task failed: {str(e)}")
+                raise e
+        
+        return self._process_streaming_info(info, format_id)
 
     def _process_streaming_info(self, info, format_id):
         """Logic to handle ffmpeg or requests streaming based on info."""
