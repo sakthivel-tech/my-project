@@ -4,6 +4,7 @@ set -o errexit
 
 echo "Installing dependencies..."
 pip install -r requirements.txt
+pip install -U yt-dlp  # Force update to latest to avoid bot detection
 chmod +x run_all.sh
 
 echo "Installing ffmpeg..."

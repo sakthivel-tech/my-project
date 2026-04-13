@@ -128,9 +128,14 @@ class DownloadService:
             })
             
             with yt_dlp.YoutubeDL(opts_copy) as ydl:
-                info = ydl.extract_info(url, download=False)
+                try:
+                    info = ydl.extract_info(url, download=False)
+                except Exception as e:
+                    self.logger.error(f"yt-dlp extract_info error: {str(e)}")
+                    raise e
+                    
                 if not info:
-                    raise ValueError("No video information returned")
+                    raise ValueError("No video information returned from yt-dlp")
                     
                 formats = []
                 seen = set()
@@ -230,13 +235,16 @@ class DownloadService:
                     raise ValueError("Function returned empty payload.")
                 return result
             except Exception as e:
-                error_msg = str(e).lower()
+                error_msg = str(e)
                 last_error = e
-                self.logger.warning(f"[{action_name}] Strategy {i+1} failed: {error_msg}")
-                if any(err in error_msg for err in ["private video", "members-only", "unavailable", "copyright"]):
+                self.logger.warning(f"[{action_name}] Strategy {i+1} failed for {url}: {error_msg}")
+                
+                # Critical errors that shouldn't be retried
+                if any(err in error_msg.lower() for err in ["private video", "members-only", "unavailable", "copyright"]):
                     raise e
                 continue
 
+        self.logger.error(f"[{action_name}] All {len(strategies)} strategies failed for {url}. Final error: {str(last_error)}")
         raise last_error
 
     def _get_streaming_logic(self, url, format_id):
