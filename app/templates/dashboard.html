@@ -180,8 +180,13 @@
             if (contentType && contentType.indexOf("application/json") !== -1) {
                 data = await resp.json();
             } else {
+                if (resp.status === 429) {
+                    throw new Error("You are being rate limited (5 requests per minute). Please wait 60 seconds and try again.");
+                } else if (resp.status >= 500) {
+                    throw new Error("The Render server timed out or crashed while extracting formats. It may be out of memory.");
+                }
                 const text = await resp.text();
-                throw new Error("Server returned an invalid response (Session may have expired or Rate Limited).");
+                throw new Error("Server returned an invalid response (Wait a minute, refresh the page, and try again).");
             }
 
             if (data.error) throw new Error(data.error);
