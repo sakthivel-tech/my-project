@@ -237,7 +237,7 @@ class DownloadService:
             "ignoreerrors": False,
             "source_address": "0.0.0.0",
             "force_ipv4": True,
-            "format": "bestvideo+bestaudio/best/bestvideo/bestaudio/worst", # Ultra-permissive selector
+            "format": "all", # Retrieve all formats without evaluating them
             "youtube_include_dash_manifest": True,
             "youtube_include_hls_manifest": True,
             "legacyserverconnect": True,
