@@ -11,6 +11,7 @@ from flask import current_app
 
 class DownloadService:
     def __init__(self, cookies_path=None):
+        self.logger = logging.getLogger(__name__)
         if not cookies_path:
             base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
             default_paths = [
@@ -34,7 +35,6 @@ class DownloadService:
                 self.logger.warning("No cookies.txt found. Operating in unauthenticated mode (high risk of bot detection).")
 
         self.cookies_path = cookies_path
-        self.logger = logging.getLogger(__name__)
         
         # Initialize Redis for caching
         try:
