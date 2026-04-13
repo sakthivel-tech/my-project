@@ -262,7 +262,6 @@ class DownloadService:
             "nocheckcertificate": True,
             "ignoreerrors": False,
             "source_address": "0.0.0.0",
-            "force_ipv4": True,
             "format": "all", # Retrieve all formats without evaluating them
             "youtube_include_dash_manifest": True,
             "youtube_include_hls_manifest": True,
@@ -277,12 +276,14 @@ class DownloadService:
 
     def _execute_with_retry(self, action_name, func, url=None):
         strategies = [
-            # Strategy 1: Default yt-dlp heuristics (Let the library do its magic)
-            {},
-            # Strategy 2: Android/iOS/TV (Aggressive mobile mix)
-            {"extractor_args": {"youtube": {"player_client": ["android", "ios", "tv"]}}},
-            # Strategy 3: Web Creator + Mweb
-            {"extractor_args": {"youtube": {"player_client": ["web_creator", "mweb"]}}}
+            # Strategy 1: Attempt native IPv6 to completely bypass data-center IPv4 blocks
+            {"force_ipv6": True},
+            # Strategy 2: Default yt-dlp heuristics over IPv4
+            {"force_ipv4": True},
+            # Strategy 3: Android/iOS/TV (Aggressive mobile mix) over IPv4
+            {"force_ipv4": True, "extractor_args": {"youtube": {"player_client": ["android", "ios", "tv"]}}},
+            # Strategy 4: Web Creator + Mweb over IPv4
+            {"force_ipv4": True, "extractor_args": {"youtube": {"player_client": ["web_creator", "mweb"]}}}
         ]
 
         last_error = None
