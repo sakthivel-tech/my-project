@@ -225,8 +225,22 @@ class DownloadService:
                         "url": f.get("url")
                     })
 
+                if not formats and "url" in info:
+                    formats.append({
+                        "format_id": "direct",
+                        "ext": info.get("ext", "mp4"),
+                        "resolution": "direct",
+                        "filesize": "Unknown",
+                        "url": info.get("url")
+                    })
+
                 if not formats:
-                    raise ValueError("Blocked: Extracted formats array is empty. No valid streams found.")
+                    err_msg = "Blocked: No streaming links found. Render Server IP may be restricted."
+                    if not self.cookies_path:
+                        err_msg += " Please provide a valid cookies.txt."
+                    else:
+                        err_msg += " Verify cookies are not expired."
+                    raise ValueError(err_msg)
 
                 return {
                     "title": info.get("title"),
@@ -265,16 +279,12 @@ class DownloadService:
 
     def _execute_with_retry(self, action_name, func, url=None):
         strategies = [
-            # Strategy 1: Android/iOS (Highest success on unauthenticated networks)
-            {"extractor_args": {"youtube": {"player_client": ["android", "ios"]}}},
-            # Strategy 2: Web Creator + TV (Highly successful Cloud API fallback)
-            {"extractor_args": {"youtube": {"player_client": ["web_creator", "tv"]}}},
-            # Strategy 3: Mobile Web (Very effective with cookies on cloud servers)
-            {"extractor_args": {"youtube": {"player_client": ["mweb"]}}},
-            # Strategy 4: Default Desktop Web
-            {"extractor_args": {"youtube": {"player_client": ["web"]}}},
-            # Strategy 5: Bare metadata
-            {}
+            # Strategy 1: Default yt-dlp heuristics (Let the library do its magic)
+            {},
+            # Strategy 2: Android/iOS/TV (Aggressive mobile mix)
+            {"extractor_args": {"youtube": {"player_client": ["android", "ios", "tv"]}}},
+            # Strategy 3: Web Creator + Mweb
+            {"extractor_args": {"youtube": {"player_client": ["web_creator", "mweb"]}}}
         ]
 
         last_error = None
