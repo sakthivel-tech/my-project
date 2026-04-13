@@ -237,7 +237,9 @@ class DownloadService:
             "ignoreerrors": False,
             "source_address": "0.0.0.0",
             "force_ipv4": True,
-            "format": "bestvideo+bestaudio/best", # Permissive selector to avoid 'format not available' errors during extraction
+            "format": "bestvideo+bestaudio/best/bestvideo/bestaudio/worst", # Ultra-permissive selector
+            "youtube_include_dash_manifest": True,
+            "youtube_include_hls_manifest": True,
             "legacyserverconnect": True,
             "referer": "https://www.youtube.com/",
             "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
