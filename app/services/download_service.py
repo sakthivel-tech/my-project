@@ -266,9 +266,7 @@ class DownloadService:
             "format": "all", # Retrieve all formats without evaluating them
             "youtube_include_dash_manifest": True,
             "youtube_include_hls_manifest": True,
-            "legacyserverconnect": True,
-            "referer": "https://www.youtube.com/",
-            "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+            "legacyserverconnect": True
         }
         
         if self.cookies_path:
