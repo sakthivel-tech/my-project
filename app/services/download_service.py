@@ -103,14 +103,42 @@ class DownloadService:
             
             if not target_url:
                 results["CONNECTIVITY_RESULT"] = "FAILED: No URL found in environment or config"
-                return results
-
-            test_client = redis.from_url(target_url, socket_timeout=5, socket_connect_timeout=5)
-            test_client.ping()
-            results["CONNECTIVITY_RESULT"] = "SUCCESS: Pong!"
+                # Proceed to cookies instead of returning early
+            else:
+                test_client = redis.from_url(target_url, socket_timeout=5, socket_connect_timeout=5)
+                test_client.ping()
+                results["CONNECTIVITY_RESULT"] = "SUCCESS: Pong!"
         except Exception as e:
             results["CONNECTIVITY_RESULT"] = f"FAILED: {str(e)}"
             
+        # 3. Cookies Audit
+        base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        default_paths = [
+            os.environ.get('YTDLP_COOKIES_PATH', ''),
+            '/etc/secrets/cookies.txt',
+            os.path.join(base_dir, 'cookies', 'cookies.txt.txt'),
+            os.path.join(base_dir, 'cookies', 'cookies.txt'),
+            os.path.join(base_dir, 'cookies.txt'),
+            os.path.join(os.getcwd(), 'cookies', 'cookies.txt')
+        ]
+        
+        found_cookie_path = None
+        for path in default_paths:
+            if path and os.path.isfile(path):
+                found_cookie_path = path
+                break
+                
+        results["COOKIES_DETECTED"] = bool(found_cookie_path)
+        if found_cookie_path:
+            results["COOKIES_PATH"] = found_cookie_path
+            try:
+                results["COOKIES_FILE_SIZE_BYTES"] = os.path.getsize(found_cookie_path)
+                with open(found_cookie_path, 'r', encoding='utf-8', errors='ignore') as f:
+                    content = f.read(500)
+                    results["COOKIES_VALID_YOUTUBE_DOMAIN"] = ".youtube.com" in content
+            except Exception as e:
+                results["COOKIES_READ_ERROR"] = str(e)
+        
         return results
 
     def _get_cache_key(self, url):
