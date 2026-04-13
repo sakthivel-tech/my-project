@@ -23,8 +23,11 @@ class DownloadService:
             ]
             for path in default_paths:
                 if path and os.path.isfile(path):
-                    cookies_path = path
                     break
+            
+            # Relocate cookies to a writable directory if needed (Fixes [Errno 30] Read-only file system)
+            if cookies_path:
+                cookies_path = self._relocate_cookies(cookies_path)
 
         self.cookies_path = cookies_path
         self.logger = logging.getLogger(__name__)
@@ -42,6 +45,27 @@ class DownloadService:
         except Exception as e:
             self.logger.warning(f"Redis initialization failed: {str(e)}")
             self.redis_client = None
+
+    def _relocate_cookies(self, original_path):
+        """Copies cookies to a writable /tmp directory if in a restricted path."""
+        import shutil
+        import tempfile
+        
+        try:
+            # Check if we are on Render (Unix) or logic applies
+            if original_path.startswith('/etc/secrets/') or not os.access(os.path.dirname(original_path), os.W_OK):
+                target_dir = '/tmp' if os.path.exists('/tmp') else tempfile.gettempdir()
+                relocated_path = os.path.join(target_dir, 'vid_tool_cookies.txt')
+                
+                self.logger.info(f"Relocating cookies from {original_path} to writable {relocated_path}")
+                shutil.copy2(original_path, relocated_path)
+                # Ensure it's writable
+                os.chmod(relocated_path, 0o600)
+                return relocated_path
+        except Exception as e:
+            self.logger.warning(f"Cookie relocation failed: {str(e)}. Falling back to original path.")
+            
+        return original_path
 
     @staticmethod
     def check_connection_diag():
